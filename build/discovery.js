@@ -27,16 +27,13 @@ const pskBlockTimeout = 500;
  * Only works if the discovering device transmits via WiFi or if
  * the router is configured to forward UDP broadcasts over WiFi
  */
-class Manager extends events_1.EventEmitter {
+class Discovery extends events_1.EventEmitter {
     constructor() {
         super();
         this._inclusionActive = false;
         this.broadcastAddress = lib_1.getBroadcastAddresses()[0];
         this.udp = dgram
-            .createSocket({
-            type: "udp4",
-            reuseAddr: true
-        })
+            .createSocket("udp4")
             .once("listening", this.udp_onListening.bind(this))
             .on("error", (e) => { throw e; });
         this.udp.bind(49999);
@@ -132,5 +129,5 @@ class Manager extends events_1.EventEmitter {
         this._inclusionActive = false;
     }
 }
-exports.Manager = Manager;
-//# sourceMappingURL=management.js.map
+exports.Discovery = Discovery;
+//# sourceMappingURL=discovery.js.map

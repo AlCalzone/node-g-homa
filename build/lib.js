@@ -53,4 +53,15 @@ function range(start, end) {
     return ret;
 }
 exports.range = range;
+function promisifyNoError(fn, context) {
+    return function (...args) {
+        context = context || this;
+        return new Promise(function (resolve, reject) {
+            fn.apply(context, [...args, function (result) {
+                    return resolve(result);
+                }]);
+        });
+    };
+}
+exports.promisifyNoError = promisifyNoError;
 //# sourceMappingURL=lib.js.map

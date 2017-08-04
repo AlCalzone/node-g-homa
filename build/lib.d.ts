@@ -8,3 +8,4 @@ export declare function getBroadcastAddresses(): string[];
 export declare function getOwnIpAddresses(): string[];
 export declare function wait(milliseconds: number): Promise<void>;
 export declare function range(start: number, end: number): number[];
+export declare function promisifyNoError<T>(fn: any, context: any): (...args: any[]) => Promise<T>;

@@ -5,7 +5,7 @@ import { EventEmitter } from "events";
  * Only works if the discovering device transmits via WiFi or if
  * the router is configured to forward UDP broadcasts over WiFi
  */
-export declare class Manager extends EventEmitter {
+export declare class Discovery extends EventEmitter {
     constructor();
     close(): void;
     private udp;

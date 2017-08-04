@@ -66,3 +66,15 @@ export function range(start: number, end: number): number[] {
 	}
 	return ret;
 }
+
+export function promisifyNoError<T>(fn, context): (...args: any[]) => Promise<T>;
+export function promisifyNoError(fn, context) {
+    return function(...args) {
+        context = context || this;
+        return new Promise(function(resolve, reject) {
+            fn.apply(context, [...args, function(result) {
+                return resolve(result);
+            }]);
+        });
+    };
+}

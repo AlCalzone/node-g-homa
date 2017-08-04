@@ -1,10 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const management_1 = require("./management");
-const mgmt = (new management_1.Manager())
-    .once("ready", () => mgmt.beginInclusion("87654321"))
-    .on("inclusion finished", (foundDevices) => {
-    console.log(`inclusion finished. found ${foundDevices.length} plugs`);
-    console.dir(foundDevices);
-});
+var discovery_1 = require("./discovery");
+exports.Discovery = discovery_1.Discovery;
+var manager_1 = require("./manager");
+exports.Manager = manager_1.Manager;
 //# sourceMappingURL=index.js.map

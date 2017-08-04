@@ -22,14 +22,24 @@
     <Content Include=".gitignore" />
     <Content Include="LICENSE" />
     <Content Include="package.json" />
+    <Content Include="README.md" />
     <Content Include="tsconfig.json" />
-    <TypeScriptCompile Include="src\config.ts" />
+    <TypeScriptCompile Include="src\manager.ts" />
     <TypeScriptCompile Include="src\index.ts" />
     <TypeScriptCompile Include="src\lib.ts" />
-    <TypeScriptCompile Include="src\management.ts" />
+    <TypeScriptCompile Include="src\discovery.ts" />
+    <TypeScriptCompile Include="src\serial.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src" />
+  </ItemGroup>
+  <ItemGroup>
+    <TypeScriptCompile Include="src\server.ts" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="src\ghoma.js" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <!--Do not delete the following Import Project.  While this appears to do nothing it is a marker for setting TypeScript properties before our import that depends on them.-->
