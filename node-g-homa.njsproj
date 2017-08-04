@@ -29,7 +29,6 @@
     <TypeScriptCompile Include="src\management.ts" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="node-g-homa" />
     <Folder Include="src" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />

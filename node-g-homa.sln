@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.13
+VisualStudioVersion = 15.0.26430.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "node-g-homa", "..\node-g-homa.njsproj", "{8E254A48-6439-42D3-9DD8-E2C3A851CD8A}"
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "node-g-homa", "node-g-homa.njsproj", "{8E254A48-6439-42D3-9DD8-E2C3A851CD8A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

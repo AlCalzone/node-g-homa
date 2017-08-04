@@ -1,11 +1,11 @@
 {
     "compileOnSave": true,          // Automatically build files in Visual Studio (Code), in combination with the watch option
     "compilerOptions": {
-        "declaration": true,        // emit d.ts files
+        "declaration": true, // emit d.ts files
         "module": "commonjs",
         "moduleResolution": "node",
-        "noEmitOnError": false,     // dont compile faulty code
-        "noImplicitAny": false,     // set to true for stricter type checking
+        "noEmitOnError": false, // dont compile faulty code
+        "noImplicitAny": false, // set to true for stricter type checking
         "outDir": "build/",
         "removeComments": false,
 
@@ -19,8 +19,8 @@
         "sourceMap": true,
         "inlineSourceMap": false,
         "sourceRoot": "src/",
-        "target": "es5",    // Compile to "old" JavaScript, you can choose target "es6" for NodeJS 6+
-        "lib": [ "es6" ]    // This is for the native Promise-support in Node4, not needed for target es6+
+        "target": "es6", // Compile to "old" JavaScript, you can choose target "es6" for NodeJS 6+
+        "lib": [ "es6" ] // This is for the native Promise-support in Node4, not needed for target es6+
         //"watch": true     // VisualStudio doesn't like this, uncomment for VSCode
     }
 }

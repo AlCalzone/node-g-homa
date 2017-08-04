@@ -1,11 +1,11 @@
 import * as dgram from "dgram";
-import { discoverDevices } from "./management";
+import { getBroadcastAddresses } from "./lib";
+import { Manager } from "./management";
 
-
-function udp_onListening() {
-	discoverDevices(udp);
-}
-
-function udp_onMessage(data, rinfo) {
-
-}
+const mgmt = (new Manager())
+	.once("ready", () => mgmt.beginInclusion("87654321"))
+	.on("inclusion finished", (foundDevices) => {
+		console.log(`inclusion finished. found ${foundDevices.length} plugs`);
+		console.dir(foundDevices);
+	})
+	;

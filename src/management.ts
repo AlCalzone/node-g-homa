@@ -1,4 +1,5 @@
 import * as dgram from "dgram";
+import { EventEmitter } from "events";
 import { wait, range, getBroadcastAddresses } from "./lib";
 
 const preambleCode = 0;
@@ -14,60 +15,107 @@ const pskNumChecksumPackets = 3;
 const pskBlockTimeout = 500;
 
 /**
- * Starts inclusion of G-Homa plugs with the given Wifi psk.
- * This only works if the current device is connected via WiFi or
- * if UDP broadcast packets are forwarded over WiFi
- * @param psk - The wifi password
+ * Provides functions for inclusion and discover of G-Homa WiFi plugs
+ * Only works if the discovering device transmits via WiFi or if
+ * the router is configured to forward UDP broadcasts over WiFi
  */
-export function beginInclusion(psk: string): void {
-	inclusionActive = true;
-	const broadcast = getBroadcastAddresses()[0];
+export class Manager extends EventEmitter {
 
-	const udp = dgram
-		.createSocket("udp4")
-		.once("listening", udp_onListening)
-		.on("message", udp_onMessage)
-		;
+	constructor() {
+		super();
 
-	udp.bind(49999);
+		this.broadcastAddress = getBroadcastAddresses()[0];
 
-	function udp_onListening() {
-		_doInclusion();
+		this.udp = dgram
+			.createSocket({
+				type: "udp4",
+				reuseAddr: true
+			})
+			.once("listening", this.udp_onListening.bind(this))
+			.on("error", (e) => { throw e })
+			;
+		this.udp.bind(49999);
 	}
-	function udp_onMessage(data: Buffer, rinfo: dgram.RemoteInfo) {
-		// TODO: react to smart_config messages (and send them!)
+
+	private udp: dgram.Socket;
+	private broadcastAddress: string;
+
+
+	private udp_onListening() {
+		this.emit("ready");
 	}
 
-	async function _doInclusion(): Promise<void> {
+	private _inclusionActive: boolean = false;
+	public get inclusionActive() { return this._inclusionActive; }
 
+	/**
+	 * Starts inclusion of G-Homa plugs with the given Wifi psk.
+	 * @param psk - The wifi password
+	 * @param stopOnDiscover - Stop the inclusion when a device was found
+	 */
+	public beginInclusion(psk: string, stopOnDiscover: boolean = true): void {
+		this._inclusionActive = true;
+		setTimeout(() => this._doInclusion(psk), 0);
+	}
+
+
+	private async _doInclusion(psk: string, stopOnDiscover: boolean = true): Promise<void> {
+
+		this.emit("inclusion started");
+
+		// try to find new plugs, this only works while including
+		const foundDevices: { [ip: string]: string } = {}; // remember ips and mac addresses of found plugs
+		const smartlinkHandler = (msg: Buffer, rinfo: dgram.RemoteInfo) => {
+			if (rinfo.port === 48899 && msg.length > 0) {
+				// ignore duplicates
+				if (foundDevices.hasOwnProperty(rinfo.address)) return;
+				// extract mac address
+				const data = msg.toString("utf8");
+				if (data.startsWith("smart_config ")) {
+					const mac = data.substring(data.indexOf(" ") + 1);
+					foundDevices[rinfo.address] = mac;
+					if (stopOnDiscover) this.cancelInclusion();
+				}
+			}
+		};
+		this.udp.on("message", smartlinkHandler);
+		const smartlinkfindTimer = setInterval(() => this.udp.send("smartlinkfind", 48899, this.broadcastAddress), 1000);
+
+		// start inclusion process
 		const endTime = Date.now() + 60000; // default: only 60s inclusion
-		while (inclusionActive && (Date.now() <= endTime)) {
+		while (this._inclusionActive && (Date.now() <= endTime)) {
 			// send preamble
 			for (let i of range(1, preambleNumPackets)) {
-				await sendCodeWithTimeout(preambleCode, preambleTimeout);
+				await this.sendCodeWithTimeout(preambleCode, preambleTimeout);
 			}
 			for (let iPSK = 1; iPSK <= 1; iPSK++) {
-				await sendPSK(Buffer.from(psk, "ascii"));
+				await this.sendPSK(Buffer.from(psk, "ascii"));
 			}
 		}
+
+		// the timer is over or the inclusion process has been handled
+		clearInterval(smartlinkfindTimer);
+		this.udp.removeListener("message", smartlinkHandler);
+
+		this.emit("inclusion finished", foundDevices);
 		return;
 
 	}
 
-	async function sendPSK(psk: Buffer) {
+	private async sendPSK(psk: Buffer) {
 		for (let i of range(1, pskNumSemiDigitsBefore)) {
-			await sendCodeWithTimeout(
+			await this.sendCodeWithTimeout(
 				pskCodeSemiDigitBefore,
 				(i < pskNumSemiDigitsBefore) ? pskSemiDigitTimeout : pskDigitTimeout
 			);
 		}
 
 		for (let i = 0; i < psk.length; i++) {
-			await sendCodeWithTimeout(psk[i], pskDigitTimeout);
+			await this.sendCodeWithTimeout(psk[i], pskDigitTimeout);
 		}
 
 		for (let i of range(1, pskNumSemiDigitsAfter)) {
-			await sendCodeWithTimeout(
+			await this.sendCodeWithTimeout(
 				pskCodeSemiDigitAfter,
 				(i < pskNumSemiDigitsAfter) ? pskSemiDigitTimeout : pskDigitTimeout
 			);
@@ -76,36 +124,27 @@ export function beginInclusion(psk: string): void {
 		const lenCode = psk.length + 256;
 		await wait(pskDigitTimeout);
 		for (let i of range(1, pskNumChecksumPackets)) {
-			await sendCodeWithTimeout(lenCode,
+			await this.sendCodeWithTimeout(lenCode,
 				(i < pskNumChecksumPackets) ? pskSemiDigitTimeout : pskBlockTimeout
 			);
 		}
 
 	}
 
-	async function sendCodeWithTimeout(code: number, timeout: number): Promise<void> {
+	private async sendCodeWithTimeout(code: number, timeout: number): Promise<void> {
 		const buf = Buffer.alloc(76 + code, 5);
-		udp.setBroadcast(true);
-		udp.send(buf, 49999, broadcast);
+		this.udp.setBroadcast(true);
+		this.udp.send(buf, 49999, this.broadcastAddress);
 		await wait(timeout);
 		return null;
 	}
-}
 
-let inclusionActive: boolean = false;
+	/**
+	 * Cancels the inclusion process
+	 */
+	public cancelInclusion() {
+		this._inclusionActive = false;
+	}
 
-/**
- * Cancels the inclusion process
- */
-export function cancelInclusion() {
-	inclusionActive = false;
-}
 
-export async function discoverDevices(socket: dgram.Socket): Promise<void> {
-	socket.setBroadcast(true);
-	const broadcast = getBroadcastAddresses()[0];
-	socket.on("message", (data, rinfo) => {
-		console.log(data.toString("utf8"));
-	});
-	socket.send("smartlinkfind", 48899, broadcast);
 }
