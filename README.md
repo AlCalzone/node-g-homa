@@ -93,6 +93,15 @@ The Plug object looks as follows:
 }
 ```
 
+### Manual serial interface
+1. run it from the command line: `node build/serial.js`
+1. enter an ip address to talk to, or leave the line blank to broadcast to all plugs
+	1. enter password `HF-A11ASSISTHREAD` (default, can be changed)
+	1. if the plug responds, confirm the receipt with `+ok`
+	1. get a list of commands with `AT+H\\r` (all commands need to include `\\r` at the end)
+	1. ...?
+	1. profit
+
 ## Changelog
 
 #### 0.0.1 (2017-08-05)
