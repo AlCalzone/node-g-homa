@@ -26,9 +26,9 @@ export declare class Manager extends EventEmitter {
      * @param serverAddress
      * @param serverPort
      */
-    configurePlug(ip: string, serverAddress: string, serverPort: string | number): Promise<void>;
+    configurePlug(ip: string, serverAddress: string, serverPort: string | number): Promise<boolean>;
     /**
      * Restores the plug at the given IP to its original configuration
      */
-    restorePlug(ip: string): Promise<void>;
+    restorePlug(ip: string): Promise<boolean>;
 }

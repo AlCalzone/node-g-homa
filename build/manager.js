@@ -117,7 +117,7 @@ class Manager extends events_1.EventEmitter {
                 // send the password
                 let response = yield this.request("HF-A11ASSISTHREAD", ip);
                 if (!response)
-                    return rej("no response");
+                    return res(false); //rej("no response");
                 // confirm receipt of the info 
                 this.send("+ok", ip);
                 // wait a bit
@@ -125,18 +125,18 @@ class Manager extends events_1.EventEmitter {
                 // set the new parameters
                 response = yield this.request(`AT+NETP=TCP,Client,${serverPort},${serverAddress}\r`, ip);
                 if (!response || !response.startsWith("+ok"))
-                    return rej("setting new params failed");
+                    return res(false); //rej("setting new params failed");
                 // confirm the new parameters
                 response = yield this.request("AT+NETP\r", ip);
                 if (!response || !response.startsWith("+ok"))
-                    return rej("setting new params failed");
+                    return res(false); //rej("setting new params failed");
                 const newParams = response.trim().split(",");
                 if (!(newParams.length === 4 &&
                     newParams[2] === serverPort &&
                     newParams[3] === serverAddress))
-                    return rej("new params were not accepted");
+                    return res(false); //rej("new params were not accepted");
                 // success
-                res();
+                res(true);
             }));
         });
     }
@@ -145,7 +145,7 @@ class Manager extends events_1.EventEmitter {
      */
     restorePlug(ip) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.configurePlug(ip, "plug.g-homa.com", 4196);
+            return yield this.configurePlug(ip, "plug.g-homa.com", 4196);
         });
     }
 }

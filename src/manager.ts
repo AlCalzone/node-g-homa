@@ -119,14 +119,14 @@ export class Manager extends EventEmitter {
 	 * @param serverAddress
 	 * @param serverPort
 	 */
-    public async configurePlug(ip: string, serverAddress: string, serverPort: string | number): Promise<void> {
+    public async configurePlug(ip: string, serverAddress: string, serverPort: string | number): Promise<boolean> {
 		// ensure the port is a string
         serverPort = "" + serverPort;
 
-		return new Promise<void>(async (res, rej) => {
+		return new Promise<boolean>(async (res, rej) => {
 			// send the password
             let response = await this.request("HF-A11ASSISTHREAD", ip);
-            if (!response) return rej("no response");
+			if (!response) return res(false);//rej("no response");
 			// confirm receipt of the info 
             this.send("+ok", ip);
 			// wait a bit
@@ -134,28 +134,28 @@ export class Manager extends EventEmitter {
 
 			// set the new parameters
             response = await this.request(`AT+NETP=TCP,Client,${serverPort},${serverAddress}\r`, ip);
-            if (!response || !response.startsWith("+ok")) return rej("setting new params failed");
+			if (!response || !response.startsWith("+ok")) return res(false); //rej("setting new params failed");
 
 			// confirm the new parameters
             response = await this.request("AT+NETP\r", ip);
-            if (!response || !response.startsWith("+ok")) return rej("setting new params failed");
+			if (!response || !response.startsWith("+ok")) return res(false); //rej("setting new params failed");
             const newParams = response.trim().split(",");
-            if (!(
-                newParams.length === 4 &&
-                newParams[2] === serverPort &&
-                newParams[3] === serverAddress
-            )) return rej("new params were not accepted");
+			if (!(
+				newParams.length === 4 &&
+				newParams[2] === serverPort &&
+				newParams[3] === serverAddress
+			)) return res(false); //rej("new params were not accepted");
 
 			// success
-            res();
+            res(true);
 		});
     }
 
 	/**
 	 * Restores the plug at the given IP to its original configuration
 	 */
-    public async restorePlug(ip: string): Promise<void> {
-        await this.configurePlug(ip, "plug.g-homa.com", 4196);
+    public async restorePlug(ip: string): Promise<boolean> {
+        return await this.configurePlug(ip, "plug.g-homa.com", 4196);
     }
 
 }
