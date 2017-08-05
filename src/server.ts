@@ -16,7 +16,7 @@ enum Commands {
 	switch = 0x10,
 	state_update = 0x90
 }
-export enum SwitchSourceInternal {
+enum SwitchSourceInternal {
 	unknown = 0x00,
 	remote = 0x81,
 	local = 0x11

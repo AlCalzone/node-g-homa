@@ -1,10 +1,4 @@
-/// <reference types="node" />
 import { EventEmitter } from "events";
-export declare enum SwitchSourceInternal {
-    unknown = 0,
-    remote = 129,
-    local = 17,
-}
 export declare type SwitchSource = "unknown" | "remote" | "local";
 export interface ServerAddress {
     port: number;

@@ -22,7 +22,7 @@ var SwitchSourceInternal;
     SwitchSourceInternal[SwitchSourceInternal["unknown"] = 0] = "unknown";
     SwitchSourceInternal[SwitchSourceInternal["remote"] = 129] = "remote";
     SwitchSourceInternal[SwitchSourceInternal["local"] = 17] = "local";
-})(SwitchSourceInternal = exports.SwitchSourceInternal || (exports.SwitchSourceInternal = {}));
+})(SwitchSourceInternal || (SwitchSourceInternal = {}));
 function serializeMessage(msg) {
     const data = Buffer.concat([Buffer.from([msg.command]), msg.payload]);
     const lengthBytes = [(data.length >>> 8) & 0xff, data.length & 0xff];
