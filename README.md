@@ -81,8 +81,8 @@ The server emits a number of events:
 The Plug object looks as follows:
 ```
 {
-	id: string,			// ID of this plug
-	ip: string,			// remote IP address
+	id: string,		// ID of this plug
+	ip: string,		// remote IP address
 	port: number,		// remote port number
 	lastSeen: number,	// last seen (UNIX time)
 	online: boolean,	// if the plug is alive or dead
@@ -98,7 +98,7 @@ The Plug object looks as follows:
 1. enter an ip address to talk to, or leave the line blank to broadcast to all plugs
 	1. enter password `HF-A11ASSISTHREAD` (default, can be changed)
 	1. if the plug responds, confirm the receipt with `+ok`
-	1. get a list of commands with `AT+H\\r` (all commands need to include `\\r` at the end)
+	1. get a list of commands with `AT+H\r` (all commands need to include `\r` at the end)
 	1. ...?
 	1. profit
 
