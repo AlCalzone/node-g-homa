@@ -12,7 +12,7 @@ if the router is configured to forward UDP broadcasts over WiFi.
 
 ### Inclusion of new plugs (only works on wireless devices):
 ```
-const gHoma = require("node-g-homa");
+const gHoma = require("g-homa");
 
 const discovery = new gHoma.Discovery();
 discovery

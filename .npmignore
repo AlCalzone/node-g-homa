@@ -1,0 +1,8 @@
+src/
+.vs/
+.vscode/
+bin/
+obj/
+tsconfig.json
+*.sln
+*.*proj
