@@ -18,8 +18,8 @@ enum Commands {
 }
 enum SwitchSourceInternal {
 	unknown = 0x00,
-	remote = 0x81,
-	local = 0x11
+	local = 0x81,
+	remote = 0x11
 }
 export type SwitchSource = "unknown" | "remote" | "local";
 
@@ -256,8 +256,8 @@ export class Server extends EventEmitter {
 					} else {
 						plug = {
 							id: null,
-							ip: socket.address().address,
-							port: socket.address().port,
+							ip: socket.remoteAddress,
+							port: socket.remotePort,
 							lastSeen: Date.now(),
 							online: true,
 							socket: socket,
@@ -306,7 +306,8 @@ export class Server extends EventEmitter {
 					this.onPlugResponse(plug);
 					// parse the state and the source of the state change
 					plug.state = msg.payload[msg.payload.length - 1] > 0;
-					plug.lastSwitchSource = msg.payload[12];
+					console.log("got update: " + msg.payload.toString("hex"));
+					plug.lastSwitchSource = msg.payload[11];
 					this.emit("plug updated", Plug.from(plug));
 					break;
 

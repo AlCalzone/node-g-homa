@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { EventEmitter } from "events";
 export declare type SwitchSource = "unknown" | "remote" | "local";
 export interface ServerAddress {

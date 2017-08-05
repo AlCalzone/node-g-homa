@@ -1,11 +1,21 @@
 "use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
-const events_1 = require("events");
-const net = require("net");
-const crypto = require("crypto");
-const lib_1 = require("./lib");
-const PREFIX = Buffer.from([0x5A, 0xA5]);
-const POSTFIX = Buffer.from([0x5B, 0xB5]);
+var events_1 = require("events");
+var net = require("net");
+var crypto = require("crypto");
+var lib_1 = require("./lib");
+var PREFIX = Buffer.from([0x5A, 0xA5]);
+var POSTFIX = Buffer.from([0x5B, 0xB5]);
 var Commands;
 (function (Commands) {
     Commands[Commands["init1"] = 2] = "init1";
@@ -20,13 +30,13 @@ var Commands;
 var SwitchSourceInternal;
 (function (SwitchSourceInternal) {
     SwitchSourceInternal[SwitchSourceInternal["unknown"] = 0] = "unknown";
-    SwitchSourceInternal[SwitchSourceInternal["remote"] = 129] = "remote";
-    SwitchSourceInternal[SwitchSourceInternal["local"] = 17] = "local";
+    SwitchSourceInternal[SwitchSourceInternal["local"] = 129] = "local";
+    SwitchSourceInternal[SwitchSourceInternal["remote"] = 17] = "remote";
 })(SwitchSourceInternal || (SwitchSourceInternal = {}));
 function serializeMessage(msg) {
-    const data = Buffer.concat([Buffer.from([msg.command]), msg.payload]);
-    const lengthBytes = [(data.length >>> 8) & 0xff, data.length & 0xff];
-    const checksum = computeChecksum(data);
+    var data = Buffer.concat([Buffer.from([msg.command]), msg.payload]);
+    var lengthBytes = [(data.length >>> 8) & 0xff, data.length & 0xff];
+    var checksum = computeChecksum(data);
     return Buffer.concat([
         PREFIX,
         Buffer.from(lengthBytes),
@@ -36,7 +46,7 @@ function serializeMessage(msg) {
     ]);
 }
 function computeChecksum(data) {
-    return 0xff - data.reduce((sum, cur) => (sum + cur) & 0xff, 0);
+    return 0xff - data.reduce(function (sum, cur) { return (sum + cur) & 0xff; }, 0);
 }
 function parseMessage(buf) {
     // the buffer has to be at least 2 (prefix) + 2 (length) + 1 (command) + 1 (checksum) + 2 (postfix) bytes long
@@ -48,16 +58,16 @@ function parseMessage(buf) {
         throw new Error("invalid data in the receive buffer");
     }
     // get length of the payload
-    const payloadLength = buf.readUInt16BE(2);
+    var payloadLength = buf.readUInt16BE(2);
     // check we have enough data
     if (buf.length < 7 + payloadLength)
         return null;
     // extract the payload
-    const data = buf.slice(4, 4 + payloadLength);
-    const command = data[0];
-    const payload = Buffer.from(data.slice(1));
+    var data = buf.slice(4, 4 + payloadLength);
+    var command = data[0];
+    var payload = Buffer.from(data.slice(1));
     // extract the checksum and check it
-    const checksum = buf[4 + payloadLength];
+    var checksum = buf[4 + payloadLength];
     if (checksum !== computeChecksum(data)) {
         console.log("invalid checksum");
         console.log(buf.toString("hex"));
@@ -79,7 +89,7 @@ function parseMessage(buf) {
 }
 function formatMac(mac) {
     return lib_1.range(0, mac.length - 1)
-        .map(i => mac[i].toString(16).toUpperCase())
+        .map(function (i) { return mac[i].toString(16).toUpperCase(); })
         .join(":");
 }
 var Plug;
@@ -94,7 +104,7 @@ var Plug;
             shortmac: formatMac(internal.shortmac),
             mac: formatMac(internal.mac),
             state: internal.state,
-            lastSwitchSource: (() => {
+            lastSwitchSource: (function () {
                 switch (internal.lastSwitchSource) {
                     case SwitchSourceInternal.unknown: return "unknown";
                     case SwitchSourceInternal.remote: return "remote";
@@ -106,49 +116,52 @@ var Plug;
     Plug.from = from;
 })(Plug || (Plug = {}));
 // constant predefined messages
-const msgInit1b = {
+var msgInit1b = {
     command: Commands.init1,
     payload: Buffer.from([])
 };
-const msgInit2 = {
+var msgInit2 = {
     command: Commands.init2,
     payload: Buffer.from([0x01])
 };
-const msgHeartbeatResponse = {
+var msgHeartbeatResponse = {
     command: Commands.heartbeat_response,
     payload: Buffer.from([])
 };
-const msgSwitch_Part1 = Buffer.from([0x01, 0x01, 0x0a, 0xe0]);
-const msgSwitch_Part2 = Buffer.from([0xff, 0xfe, 0x00, 0x00, 0x10, 0x11, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00]);
-class Server extends events_1.EventEmitter {
-    constructor(port) {
-        super();
-        this.plugs = {};
-        this.server = net
-            .createServer(this.server_onConnection.bind(this))
-            .once("listening", this.server_onListening.bind(this))
-            .once("close", this.server_onClose.bind(this));
+var msgSwitch_Part1 = Buffer.from([0x01, 0x01, 0x0a, 0xe0]);
+var msgSwitch_Part2 = Buffer.from([0xff, 0xfe, 0x00, 0x00, 0x10, 0x11, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00]);
+var Server = (function (_super) {
+    __extends(Server, _super);
+    function Server(port) {
+        var _this = _super.call(this) || this;
+        _this.plugs = {};
+        _this.server = net
+            .createServer(_this.server_onConnection.bind(_this))
+            .once("listening", _this.server_onListening.bind(_this))
+            .once("close", _this.server_onClose.bind(_this));
         if (port != null)
-            this.server.listen(port);
+            _this.server.listen(port);
         else
-            this.server.listen();
-        this.checkPlugTimer = setInterval(this.checkPlugsThread.bind(this), 10000);
+            _this.server.listen();
+        _this.checkPlugTimer = setInterval(_this.checkPlugsThread.bind(_this), 10000);
+        return _this;
     }
-    close() {
+    Server.prototype.close = function () {
         this.server.close();
-    }
+    };
     // gets called whenever a new client connects
-    server_onConnection(socket) {
+    Server.prototype.server_onConnection = function (socket) {
+        var _this = this;
         console.log("connection from " + socket.remoteAddress);
-        let receiveBuffer = Buffer.from([]);
-        let id;
-        let plug;
-        let isReconnection = false;
-        socket.on("data", (data) => {
+        var receiveBuffer = Buffer.from([]);
+        var id;
+        var plug;
+        var isReconnection = false;
+        socket.on("data", function (data) {
             // remember the received data
             receiveBuffer = Buffer.concat([receiveBuffer, data]);
             // parse all messages
-            let msg;
+            var msg;
             // parse all complete messages in the buffer
             while (msg = parseMessage(receiveBuffer)) {
                 // handle the message
@@ -157,48 +170,48 @@ class Server extends events_1.EventEmitter {
                 receiveBuffer = Buffer.from(receiveBuffer.slice(msg.bytesRead));
             }
         });
-        socket.on("close", () => {
+        socket.on("close", function () {
             if (id != null) {
                 // known client, remove it from the list
-                if (this.plugs.hasOwnProperty(id))
-                    delete this.plugs[id];
+                if (_this.plugs.hasOwnProperty(id))
+                    delete _this.plugs[id];
                 // also notify our listeners
-                this.emit("plug disconnected", id);
+                _this.emit("plug disconnected", id);
             }
         });
-        socket.on("error", (err) => {
-            console.log(`socket error. mac=${plug.shortmac}. error: ${err}`);
+        socket.on("error", function (err) {
+            console.log("socket error. mac=" + plug.shortmac + ". error: " + err);
         });
         // handles incoming messages
-        let expectedCommands = [];
-        const handleMessage = (msg) => {
+        var expectedCommands = [];
+        var handleMessage = function (msg) {
             // check if the command was expected
             if (expectedCommands.length > 0 && expectedCommands.indexOf(msg.command) === -1) {
-                this.emit("error", "unexpected command: " + msg.command);
+                _this.emit("error", "unexpected command: " + msg.command);
                 socket.destroy();
                 return;
             }
             // check if the command was sent from the correct plug
             if (plug && plug.shortmac && !msg.payload.slice(5, 8).equals(plug.shortmac)) {
-                this.emit("error", "received a message with a wrong shortmac");
+                _this.emit("error", "received a message with a wrong shortmac");
                 socket.destroy();
                 return;
             }
             switch (msg.command) {
                 case Commands.init1_response:
                     // extract the triggercode and shortmac
-                    let triggercode = Buffer.from(msg.payload.slice(3, 5));
-                    let shortmac = Buffer.from(msg.payload.slice(5, 8));
+                    var triggercode = Buffer.from(msg.payload.slice(3, 5));
+                    var shortmac = Buffer.from(msg.payload.slice(5, 8));
                     id = shortmac.toString("hex");
-                    if (this.plugs.hasOwnProperty(id)) {
+                    if (_this.plugs.hasOwnProperty(id)) {
                         isReconnection = true;
-                        plug = this.plugs[id];
+                        plug = _this.plugs[id];
                     }
                     else {
                         plug = {
                             id: null,
-                            ip: socket.address().address,
-                            port: socket.address().port,
+                            ip: socket.remoteAddress,
+                            port: socket.remotePort,
                             lastSeen: Date.now(),
                             online: true,
                             socket: socket,
@@ -212,13 +225,13 @@ class Server extends events_1.EventEmitter {
                     plug.id = id;
                     plug.triggercode = triggercode;
                     plug.shortmac = shortmac;
-                    this.onPlugResponse(plug);
+                    _this.onPlugResponse(plug);
                     // send init2 request
                     expectedCommands = [Commands.init2_response, Commands.state_update];
                     socket.write(serializeMessage(msgInit2));
                     break;
                 case Commands.init2_response:
-                    this.onPlugResponse(plug);
+                    _this.onPlugResponse(plug);
                     // check if the payload contains the full mac at the end
                     if (msg.payload.slice(-3).equals(plug.shortmac)) {
                         // first reply, extract the full mac
@@ -228,27 +241,28 @@ class Server extends events_1.EventEmitter {
                         // 2nd reply, handshake is over
                         expectedCommands = [];
                         // remember plug and notify listeners
-                        this.plugs[id] = plug;
+                        _this.plugs[id] = plug;
                         if (!isReconnection)
-                            this.emit("plug added", id);
+                            _this.emit("plug added", id);
                     }
                     break;
                 case Commands.heartbeat:
-                    this.onPlugResponse(plug);
+                    _this.onPlugResponse(plug);
                     // reply so the socket doesn't forget us
                     socket.write(serializeMessage(msgHeartbeatResponse));
                     break;
                 case Commands.state_update:
-                    this.onPlugResponse(plug);
+                    _this.onPlugResponse(plug);
                     // parse the state and the source of the state change
                     plug.state = msg.payload[msg.payload.length - 1] > 0;
-                    plug.lastSwitchSource = msg.payload[12];
-                    this.emit("plug updated", Plug.from(plug));
+                    console.log("got update: " + msg.payload.toString("hex"));
+                    plug.lastSwitchSource = msg.payload[11];
+                    _this.emit("plug updated", Plug.from(plug));
                     break;
             }
         };
         // start the handshake
-        const msgInit1a = {
+        var msgInit1a = {
             command: Commands.init1,
             payload: crypto.randomBytes(6) // Buffer.from([0x05, 0x0d, 0x07, 0x05, 0x07, 0x12])
         };
@@ -257,34 +271,35 @@ class Server extends events_1.EventEmitter {
             serializeMessage(msgInit1a),
             serializeMessage(msgInit1b)
         ]));
-    }
-    server_onListening() {
+    };
+    Server.prototype.server_onListening = function () {
         this.emit("server started", this.server.address());
-    }
-    server_onClose() {
+    };
+    Server.prototype.server_onClose = function () {
         clearInterval(this.checkPlugTimer);
         this.emit("server closed");
-    }
+    };
     /**
      * Gets called when a plug sends an expected response
      */
-    onPlugResponse(plug) {
+    Server.prototype.onPlugResponse = function (plug) {
         plug.lastSeen = Date.now();
         // if the plug is known and was offline, notify listeners that it is alive
         if (plug.shortmac) {
-            const id = plug.shortmac.toString("hex");
+            var id = plug.shortmac.toString("hex");
             if (!plug.online && this.plugs.hasOwnProperty(id)) {
                 plug.online = true;
                 this.emit("plug alive", id);
             }
         }
-    }
+    };
     /**
      * Gets called regularly to clean up dead plugs from the database
      */
-    checkPlugsThread() {
-        for (let id of Object.keys(this.plugs)) {
-            const plug = this.plugs[id];
+    Server.prototype.checkPlugsThread = function () {
+        for (var _i = 0, _a = Object.keys(this.plugs); _i < _a.length; _i++) {
+            var id = _a[_i];
+            var plug = this.plugs[id];
             if (plug.online) {
                 if (Date.now() - plug.lastSeen > 60000) {
                     // 1 minute with no response, expect the plug to be dead
@@ -293,27 +308,28 @@ class Server extends events_1.EventEmitter {
                 }
             }
         }
-    }
+    };
     /**
      * Switch the plug with the given ID to the given state
      */
-    switchPlug(id, state) {
+    Server.prototype.switchPlug = function (id, state) {
         if (this.plugs.hasOwnProperty(id)) {
-            const plug = this.plugs[id];
-            const payload = Buffer.concat([
+            var plug = this.plugs[id];
+            var payload = Buffer.concat([
                 msgSwitch_Part1,
                 plug.triggercode,
                 plug.shortmac,
                 msgSwitch_Part2,
                 Buffer.from([state ? 0xff : 0x00])
             ]);
-            const msgSwitch = {
+            var msgSwitch = {
                 command: Commands.switch,
                 payload: payload
             };
             plug.socket.write(serializeMessage(msgSwitch));
         }
-    }
-}
+    };
+    return Server;
+}(events_1.EventEmitter));
 exports.Server = Server;
 //# sourceMappingURL=server.js.map

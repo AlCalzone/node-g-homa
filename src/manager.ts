@@ -31,11 +31,15 @@ export class Manager extends EventEmitter {
 		super();
 
 		this.broadcastAddress = getBroadcastAddresses()[0];
+		console.log("broadcast address = " + this.broadcastAddress);
 
 		this.udp = dgram
 			.createSocket("udp4")
 			.once("listening", this.udp_onListening.bind(this))
-			.on("error", (e) => { throw e })
+			.on("error", (e) => {
+				console.log("error: " + e);
+				throw e;
+			})
 			;
 		this.udp.bind(); // doesn't matter which address
 	}
@@ -43,6 +47,7 @@ export class Manager extends EventEmitter {
 	public close() {
 		this.udp.close();
 		this.emit("closed");
+		console.log("socket closed");
 	}
 
 	private udp: dgram.Socket;
@@ -50,10 +55,12 @@ export class Manager extends EventEmitter {
 
 
 	private udp_onListening() {
+		console.log("manager socket ready");
 		this.emit("ready");
 	}
 
 	private send(msg: string, ip: string = this.broadcastAddress) {
+		console.log(`sending message "${msg}" to ${ip}`);
 		const buf = Buffer.from(msg, "ascii");
 		this.udp.send(buf, 0, buf.length, 48899, ip);
 	}
@@ -67,11 +74,13 @@ export class Manager extends EventEmitter {
 			const responses: DiscoverResponse[] = [];
 			const handleDiscoverResponse = (msg: Buffer, rinfo: dgram.RemoteInfo) => {
 				if (msg.length && rinfo.port === 48899) {
+					console.log("received response: " + msg.toString("ascii"));
 					const response = DiscoverResponse.parse(msg.toString("ascii"))
 					if (response) responses.push(response);
 				}
 			}
 			this.udp.on("message", handleDiscoverResponse)
+			this.udp.setBroadcast(true);
 			this.send("HF-A11ASSISTHREAD");
 
 			// Give the plugs time to respond
@@ -92,11 +101,14 @@ export class Manager extends EventEmitter {
             const handleResponse = (msg: Buffer, rinfo: dgram.RemoteInfo) => {
                 if (msg.length && rinfo.port === 48899) {
                     response = msg.toString("ascii");
+					console.log("received response: " + response);
                 }
             }
 
 			// setup the handler and send the message
             this.udp.once("message", handleResponse);
+			console.log("sending message: " + msg);
+			this.udp.setBroadcast(false);
             this.send(msg, ip);
 
 			// wait for a receipt (we are only expecting single messages)
@@ -125,6 +137,7 @@ export class Manager extends EventEmitter {
 
 		return new Promise<boolean>(async (res, rej) => {
 			// send the password
+			this.udp.setBroadcast(false);
             let response = await this.request("HF-A11ASSISTHREAD", ip);
 			if (!response) return res(false);//rej("no response");
 			// confirm receipt of the info 
