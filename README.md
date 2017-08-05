@@ -104,6 +104,9 @@ The Plug object looks as follows:
 
 ## Changelog
 
+#### 0.0.2 (2017-08-05)
+* (AlCalzone) Bugfixes and additional logging
+
 #### 0.0.1 (2017-08-05)
 * (AlCalzone) Initial release
 
