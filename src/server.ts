@@ -311,6 +311,11 @@ export class Server extends EventEmitter {
 					this.emit("plug updated", Plug.from(plug));
 					break;
 
+				default:
+					console.log("received message with unknown command " + msg.command.toString(16));
+					console.log(msg.payload.toString("hex"));
+					break;
+
 			}
 		}
 
