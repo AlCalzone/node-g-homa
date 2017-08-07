@@ -104,6 +104,9 @@ The Plug object looks as follows:
 
 ## Changelog
 
+#### 0.0.3 (2017-08-07)
+* (AlCalzone) Fix incompatibility with NodeJS 4.x
+
 #### 0.0.2 (2017-08-05)
 * (AlCalzone) Bugfixes and additional logging
 
