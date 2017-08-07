@@ -18,8 +18,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t;
-    return { next: verb(0), "throw": verb(1), "return": verb(2) };
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -126,7 +126,10 @@ var Discovery = (function (_super) {
                             }
                         };
                         this.udp.on("message", smartlinkHandler);
-                        smartlinkfindTimer = setInterval(function () { return _this.udp.send("smartlinkfind", 48899, _this.broadcastAddress); }, 1000);
+                        smartlinkfindTimer = setInterval(function () {
+                            var msg = Buffer.from("smartlinkfind", "ascii");
+                            _this.udp.send(msg, 0, msg.length, 48899, _this.broadcastAddress);
+                        }, 1000);
                         endTime = Date.now() + 60000;
                         _b.label = 1;
                     case 1:
@@ -239,7 +242,7 @@ var Discovery = (function (_super) {
                     case 0:
                         buf = Buffer.alloc(76 + code, 5);
                         this.udp.setBroadcast(true);
-                        this.udp.send(buf, 49999, this.broadcastAddress);
+                        this.udp.send(buf, 0, buf.length, 49999, this.broadcastAddress);
                         return [4 /*yield*/, lib_1.wait(timeout)];
                     case 1:
                         _a.sent();
