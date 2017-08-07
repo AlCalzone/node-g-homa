@@ -80,7 +80,10 @@ export class Discovery extends EventEmitter {
 			}
 		};
 		this.udp.on("message", smartlinkHandler);
-		const smartlinkfindTimer = setInterval(() => this.udp.send("smartlinkfind", 48899, this.broadcastAddress), 1000);
+		const smartlinkfindTimer = setInterval(() => {
+			const msg = Buffer.from("smartlinkfind", "ascii");
+			this.udp.send(msg, 0, msg.length, 48899, this.broadcastAddress)
+		}, 1000);
 
 		// start inclusion process
 		const endTime = Date.now() + 60000; // default: only 60s inclusion
@@ -135,7 +138,7 @@ export class Discovery extends EventEmitter {
 	private async sendCodeWithTimeout(code: number, timeout: number): Promise<void> {
 		const buf = Buffer.alloc(76 + code, 5);
 		this.udp.setBroadcast(true);
-		this.udp.send(buf, 49999, this.broadcastAddress);
+		this.udp.send(buf, 0, buf.length, 49999, this.broadcastAddress);
 		await wait(timeout);
 		return null;
 	}
