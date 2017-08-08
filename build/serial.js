@@ -36,8 +36,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var dgram = require("dgram");
-var lib_1 = require("./lib");
 var readline = require("readline");
+var lib_1 = require("./lib");
 var udp = dgram
     .createSocket({
     type: "udp4",

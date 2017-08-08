@@ -10,9 +10,10 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+// tslint:disable:variable-name
+var crypto = require("crypto");
 var events_1 = require("events");
 var net = require("net");
-var crypto = require("crypto");
 var lib_1 = require("./lib");
 var PREFIX = Buffer.from([0x5A, 0xA5]);
 var POSTFIX = Buffer.from([0x5B, 0xB5]);
@@ -42,7 +43,7 @@ function serializeMessage(msg) {
         Buffer.from(lengthBytes),
         data,
         Buffer.from([checksum]),
-        POSTFIX
+        POSTFIX,
     ]);
 }
 function computeChecksum(data) {
@@ -82,9 +83,9 @@ function parseMessage(buf) {
     return {
         msg: {
             command: command,
-            payload: payload
+            payload: payload,
         },
-        bytesRead: 4 + payloadLength + 3
+        bytesRead: 4 + payloadLength + 3,
     };
 }
 function formatMac(mac) {
@@ -92,6 +93,7 @@ function formatMac(mac) {
         .map(function (i) { return mac[i].toString(16).toUpperCase(); })
         .join(":");
 }
+// tslint:disable-next-line:no-namespace
 var Plug;
 (function (Plug) {
     function from(internal) {
@@ -118,15 +120,15 @@ var Plug;
 // constant predefined messages
 var msgInit1b = {
     command: Commands.init1,
-    payload: Buffer.from([])
+    payload: Buffer.from([]),
 };
 var msgInit2 = {
     command: Commands.init2,
-    payload: Buffer.from([0x01])
+    payload: Buffer.from([0x01]),
 };
 var msgHeartbeatResponse = {
     command: Commands.heartbeat_response,
-    payload: Buffer.from([])
+    payload: Buffer.from([]),
 };
 var msgSwitch_Part1 = Buffer.from([0x01, 0x01, 0x0a, 0xe0]);
 var msgSwitch_Part2 = Buffer.from([0xff, 0xfe, 0x00, 0x00, 0x10, 0x11, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00]);
@@ -139,10 +141,12 @@ var Server = (function (_super) {
             .createServer(_this.server_onConnection.bind(_this))
             .once("listening", _this.server_onListening.bind(_this))
             .once("close", _this.server_onClose.bind(_this));
-        if (port != null)
+        if (port != null) {
             _this.server.listen(port);
-        else
+        }
+        else {
             _this.server.listen();
+        }
         _this.checkPlugTimer = setInterval(_this.checkPlugsThread.bind(_this), 10000);
         return _this;
     }
@@ -163,6 +167,7 @@ var Server = (function (_super) {
             // parse all messages
             var msg;
             // parse all complete messages in the buffer
+            // tslint:disable-next-line:no-conditional-assignment
             while (msg = parseMessage(receiveBuffer)) {
                 // handle the message
                 handleMessage(msg.msg);
@@ -219,7 +224,7 @@ var Server = (function (_super) {
                             shortmac: null,
                             mac: null,
                             state: false,
-                            lastSwitchSource: SwitchSourceInternal.unknown
+                            lastSwitchSource: SwitchSourceInternal.unknown,
                         };
                     }
                     plug.id = id;
@@ -268,12 +273,12 @@ var Server = (function (_super) {
         // start the handshake
         var msgInit1a = {
             command: Commands.init1,
-            payload: crypto.randomBytes(6) // Buffer.from([0x05, 0x0d, 0x07, 0x05, 0x07, 0x12])
+            payload: crypto.randomBytes(6),
         };
         expectedCommands = [Commands.init1_response];
         socket.write(Buffer.concat([
             serializeMessage(msgInit1a),
-            serializeMessage(msgInit1b)
+            serializeMessage(msgInit1b),
         ]));
     };
     Server.prototype.server_onListening = function () {
@@ -324,11 +329,11 @@ var Server = (function (_super) {
                 plug.triggercode,
                 plug.shortmac,
                 msgSwitch_Part2,
-                Buffer.from([state ? 0xff : 0x00])
+                Buffer.from([state ? 0xff : 0x00]),
             ]);
             var msgSwitch = {
                 command: Commands.switch,
-                payload: payload
+                payload: payload,
             };
             plug.socket.write(serializeMessage(msgSwitch));
         }

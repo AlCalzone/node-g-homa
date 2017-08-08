@@ -1,6 +1,7 @@
+// tslint:disable:variable-name
+import * as crypto from "crypto";
 import { EventEmitter } from "events";
 import * as net from "net";
-import * as crypto from "crypto";
 import { range } from "./lib";
 
 const PREFIX = Buffer.from([0x5A, 0xA5]);
@@ -14,19 +15,18 @@ enum Commands {
 	heartbeat = 0x04,
 	heartbeat_response = 0x06,
 	switch = 0x10,
-	state_update = 0x90
+	state_update = 0x90,
 }
 enum SwitchSourceInternal {
 	unknown = 0x00,
 	local = 0x81,
-	remote = 0x11
+	remote = 0x11,
 }
 export type SwitchSource = "unknown" | "remote" | "local";
 
-
 interface Message {
-	command: Commands,
-	payload: Buffer
+	command: Commands;
+	payload: Buffer;
 }
 function serializeMessage(msg: Message): Buffer {
 	const data = Buffer.concat([Buffer.from([msg.command]), msg.payload]);
@@ -39,7 +39,7 @@ function serializeMessage(msg: Message): Buffer {
 		Buffer.from(lengthBytes),
 		data,
 		Buffer.from([checksum]),
-		POSTFIX
+		POSTFIX,
 	]);
 }
 function computeChecksum(data: Buffer): number {
@@ -81,49 +81,50 @@ function parseMessage(buf: Buffer): { msg: Message, bytesRead: number } {
 	return {
 		msg: {
 			command: command,
-			payload: payload
+			payload: payload,
 		},
-		bytesRead: 4 + payloadLength + 3
+		bytesRead: 4 + payloadLength + 3,
 	};
 
 }
 
 function formatMac(mac: Buffer): string {
-	return range(0, mac.length-1)
+	return range(0, mac.length - 1)
 		.map(i => mac[i].toString(16).toUpperCase())
 		.join(":")
 		;
 }
 
 export interface ServerAddress {
-	port: number,
-	family: string,
-	address: string
+	port: number;
+	family: string;
+	address: string;
 }
 export interface Plug {
-	id: string,
-	ip: string,
-	port: number,
-	lastSeen: number,
-	online: boolean,
-	lastSwitchSource: SwitchSource,
-	state: boolean,
-	shortmac: string,
-	mac: string,
+	id: string;
+	ip: string;
+	port: number;
+	lastSeen: number;
+	online: boolean;
+	lastSwitchSource: SwitchSource;
+	state: boolean;
+	shortmac: string;
+	mac: string;
 }
 interface PlugInternal {
-	id: string,
-	ip: string,
-	port: number,
-	lastSeen: number,
-	online: boolean,
-	shortmac: Buffer,
-	mac: Buffer,
-	state: boolean,
-	lastSwitchSource: SwitchSourceInternal,
-	socket: net.Socket,
-	triggercode: Buffer,
+	id: string;
+	ip: string;
+	port: number;
+	lastSeen: number;
+	online: boolean;
+	shortmac: Buffer;
+	mac: Buffer;
+	state: boolean;
+	lastSwitchSource: SwitchSourceInternal;
+	socket: net.Socket;
+	triggercode: Buffer;
 }
+// tslint:disable-next-line:no-namespace
 namespace Plug {
 	export function from(internal: PlugInternal): Plug {
 		return {
@@ -137,27 +138,27 @@ namespace Plug {
 			state: internal.state,
 			lastSwitchSource: (() => {
 				switch (internal.lastSwitchSource) {
-					case SwitchSourceInternal.unknown: return "unknown"
-					case SwitchSourceInternal.remote: return "remote"
-					case SwitchSourceInternal.local: return "local"
+					case SwitchSourceInternal.unknown: return "unknown";
+					case SwitchSourceInternal.remote: return "remote";
+					case SwitchSourceInternal.local: return "local";
 				}
 			})() as SwitchSource,
-		}
+		};
 	}
 }
 
 // constant predefined messages
 const msgInit1b: Message = {
 	command: Commands.init1,
-	payload: Buffer.from([])
+	payload: Buffer.from([]),
 };
 const msgInit2: Message = {
 	command: Commands.init2,
-	payload: Buffer.from([0x01])
+	payload: Buffer.from([0x01]),
 };
 const msgHeartbeatResponse: Message = {
 	command: Commands.heartbeat_response,
-	payload: Buffer.from([])
+	payload: Buffer.from([]),
 };
 const msgSwitch_Part1 = Buffer.from([0x01, 0x01, 0x0a, 0xe0]);
 const msgSwitch_Part2 = Buffer.from([0xff, 0xfe, 0x00, 0x00, 0x10, 0x11, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00]);
@@ -172,10 +173,11 @@ export class Server extends EventEmitter {
 			.once("listening", this.server_onListening.bind(this))
 			.once("close", this.server_onClose.bind(this))
 			;
-		if (port != null)
+		if (port != null) {
 			this.server.listen(port);
-		else
+		} else {
 			this.server.listen();
+		}
 
 		this.checkPlugTimer = setInterval(this.checkPlugsThread.bind(this), 10000);
 	}
@@ -204,6 +206,7 @@ export class Server extends EventEmitter {
 			// parse all messages
 			let msg: { msg: Message, bytesRead: number };
 			// parse all complete messages in the buffer
+			// tslint:disable-next-line:no-conditional-assignment
 			while (msg = parseMessage(receiveBuffer)) {
 				// handle the message
 				handleMessage(msg.msg);
@@ -215,8 +218,7 @@ export class Server extends EventEmitter {
 		socket.on("close", () => {
 			if (id != null) {
 				// known client, remove it from the list
-				if (this.plugs.hasOwnProperty(id))
-					delete this.plugs[id];
+				if (this.plugs.hasOwnProperty(id)) delete this.plugs[id];
 
 				// also notify our listeners
 				this.emit("plug disconnected", id);
@@ -247,8 +249,8 @@ export class Server extends EventEmitter {
 
 				case Commands.init1_response:
 					// extract the triggercode and shortmac
-					let triggercode = Buffer.from(msg.payload.slice(3, 5));
-					let shortmac = Buffer.from(msg.payload.slice(5, 8));
+					const triggercode = Buffer.from(msg.payload.slice(3, 5));
+					const shortmac = Buffer.from(msg.payload.slice(5, 8));
 					id = shortmac.toString("hex");
 					if (this.plugs.hasOwnProperty(id)) {
 						isReconnection = true;
@@ -265,7 +267,7 @@ export class Server extends EventEmitter {
 							shortmac: null,
 							mac: null,
 							state: false,
-							lastSwitchSource: SwitchSourceInternal.unknown
+							lastSwitchSource: SwitchSourceInternal.unknown,
 						};
 					}
 					plug.id = id;
@@ -279,7 +281,6 @@ export class Server extends EventEmitter {
 
 					break;
 
-
 				case Commands.init2_response:
 					this.onPlugResponse(plug);
 					// check if the payload contains the full mac at the end
@@ -291,8 +292,7 @@ export class Server extends EventEmitter {
 						expectedCommands = [];
 						// remember plug and notify listeners
 						this.plugs[id] = plug;
-						if (!isReconnection)
-							this.emit("plug added", id);
+						if (!isReconnection) this.emit("plug added", id);
 					}
 					break;
 
@@ -317,17 +317,17 @@ export class Server extends EventEmitter {
 					break;
 
 			}
-		}
+		};
 
 		// start the handshake
 		const msgInit1a: Message = {
 			command: Commands.init1,
-			payload: crypto.randomBytes(6) // Buffer.from([0x05, 0x0d, 0x07, 0x05, 0x07, 0x12])
+			payload: crypto.randomBytes(6), // Buffer.from([0x05, 0x0d, 0x07, 0x05, 0x07, 0x12])
 		};
 		expectedCommands = [Commands.init1_response];
 		socket.write(Buffer.concat([
 			serializeMessage(msgInit1a),
-			serializeMessage(msgInit1b)
+			serializeMessage(msgInit1b),
 		]));
 
 	}
@@ -358,7 +358,7 @@ export class Server extends EventEmitter {
 	 * Gets called regularly to clean up dead plugs from the database
 	 */
 	private checkPlugsThread() {
-		for (let id of Object.keys(this.plugs)) {
+		for (const id of Object.keys(this.plugs)) {
 			const plug = this.plugs[id];
 			if (plug.online) {
 				if (Date.now() - plug.lastSeen > 60000) {
@@ -381,11 +381,11 @@ export class Server extends EventEmitter {
 				plug.triggercode,
 				plug.shortmac,
 				msgSwitch_Part2,
-				Buffer.from([state ? 0xff : 0x00])
+				Buffer.from([state ? 0xff : 0x00]),
 			]);
 			const msgSwitch: Message = {
 				command: Commands.switch,
-				payload: payload
+				payload: payload,
 			};
 			plug.socket.write(serializeMessage(msgSwitch));
 		}

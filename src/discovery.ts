@@ -1,6 +1,6 @@
 import * as dgram from "dgram";
 import { EventEmitter } from "events";
-import { wait, range, getBroadcastAddresses } from "./lib";
+import { getBroadcastAddresses, range, wait } from "./lib";
 
 const preambleCode = 0;
 const preambleTimeout = 10;
@@ -29,7 +29,7 @@ export class Discovery extends EventEmitter {
 		this.udp = dgram
 			.createSocket("udp4")
 			.once("listening", this.udp_onListening.bind(this))
-			.on("error", (e) => { throw e })
+			.on("error", (e) => { throw e; })
 			;
 		this.udp.bind(49999);
 	}
@@ -40,7 +40,6 @@ export class Discovery extends EventEmitter {
 
 	private udp: dgram.Socket;
 	private broadcastAddress: string;
-
 
 	private udp_onListening() {
 		this.emit("ready");
@@ -58,7 +57,6 @@ export class Discovery extends EventEmitter {
 		this._inclusionActive = true;
 		setTimeout(() => this._doInclusion(psk), 0);
 	}
-
 
 	private async _doInclusion(psk: string, stopOnDiscover: boolean = true): Promise<void> {
 
@@ -82,14 +80,14 @@ export class Discovery extends EventEmitter {
 		this.udp.on("message", smartlinkHandler);
 		const smartlinkfindTimer = setInterval(() => {
 			const msg = Buffer.from("smartlinkfind", "ascii");
-			this.udp.send(msg, 0, msg.length, 48899, this.broadcastAddress)
+			this.udp.send(msg, 0, msg.length, 48899, this.broadcastAddress);
 		}, 1000);
 
 		// start inclusion process
 		const endTime = Date.now() + 60000; // default: only 60s inclusion
 		while (this._inclusionActive && (Date.now() <= endTime)) {
 			// send preamble
-			for (let i of range(1, preambleNumPackets)) {
+			for (const i of range(1, preambleNumPackets)) {
 				await this.sendCodeWithTimeout(preambleCode, preambleTimeout);
 			}
 			for (let iPSK = 1; iPSK <= 1; iPSK++) {
@@ -107,18 +105,19 @@ export class Discovery extends EventEmitter {
 	}
 
 	private async sendPSK(psk: Buffer) {
-		for (let i of range(1, pskNumSemiDigitsBefore)) {
+		for (const i of range(1, pskNumSemiDigitsBefore)) {
 			await this.sendCodeWithTimeout(
 				pskCodeSemiDigitBefore,
 				(i < pskNumSemiDigitsBefore) ? pskSemiDigitTimeout : pskDigitTimeout
 			);
 		}
 
+		// tslint:disable-next-line:prefer-for-of
 		for (let i = 0; i < psk.length; i++) {
 			await this.sendCodeWithTimeout(psk[i], pskDigitTimeout);
 		}
 
-		for (let i of range(1, pskNumSemiDigitsAfter)) {
+		for (const i of range(1, pskNumSemiDigitsAfter)) {
 			await this.sendCodeWithTimeout(
 				pskCodeSemiDigitAfter,
 				(i < pskNumSemiDigitsAfter) ? pskSemiDigitTimeout : pskDigitTimeout
@@ -127,7 +126,7 @@ export class Discovery extends EventEmitter {
 
 		const lenCode = psk.length + 256;
 		await wait(pskDigitTimeout);
-		for (let i of range(1, pskNumChecksumPackets)) {
+		for (const i of range(1, pskNumChecksumPackets)) {
 			await this.sendCodeWithTimeout(lenCode,
 				(i < pskNumChecksumPackets) ? pskSemiDigitTimeout : pskBlockTimeout
 			);
@@ -149,6 +148,5 @@ export class Discovery extends EventEmitter {
 	public cancelInclusion() {
 		this._inclusionActive = false;
 	}
-
 
 }

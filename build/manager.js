@@ -48,6 +48,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var dgram = require("dgram");
 var events_1 = require("events");
 var lib_1 = require("./lib");
+// tslint:disable-next-line:no-namespace
 var DiscoverResponse;
 (function (DiscoverResponse) {
     function parse(response) {
@@ -56,7 +57,7 @@ var DiscoverResponse;
             return {
                 ip: parts[0],
                 mac: parts[1],
-                type: parts[2]
+                type: parts[2],
             };
         }
         catch (e) {
@@ -150,9 +151,9 @@ var Manager = (function (_super) {
                         return __generator(this, function (_a) {
                             switch (_a.label) {
                                 case 0:
-                                    handleResponse = function (msg, rinfo) {
-                                        if (msg.length && rinfo.port === 48899) {
-                                            response = msg.toString("ascii");
+                                    handleResponse = function (resp, rinfo) {
+                                        if (resp.length && rinfo.port === 48899) {
+                                            response = resp.toString("ascii");
                                             console.log("received response: " + response);
                                         }
                                     };
@@ -206,8 +207,8 @@ var Manager = (function (_super) {
                                 case 1:
                                     response = _a.sent();
                                     if (!response)
-                                        return [2 /*return*/, res(false)]; //rej("no response");
-                                    // confirm receipt of the info 
+                                        return [2 /*return*/, res(false)]; // rej("no response");
+                                    // confirm receipt of the info
                                     this.send("+ok", ip);
                                     // wait a bit
                                     return [4 /*yield*/, lib_1.wait(100)];
@@ -219,18 +220,18 @@ var Manager = (function (_super) {
                                     // set the new parameters
                                     response = _a.sent();
                                     if (!response || !response.startsWith("+ok"))
-                                        return [2 /*return*/, res(false)]; //rej("setting new params failed");
+                                        return [2 /*return*/, res(false)]; // rej("setting new params failed");
                                     return [4 /*yield*/, this.request("AT+NETP\r", ip)];
                                 case 4:
                                     // confirm the new parameters
                                     response = _a.sent();
                                     if (!response || !response.startsWith("+ok"))
-                                        return [2 /*return*/, res(false)]; //rej("setting new params failed");
+                                        return [2 /*return*/, res(false)]; // rej("setting new params failed");
                                     newParams = response.trim().split(",");
                                     if (!(newParams.length === 4 &&
                                         newParams[2] === serverPort &&
                                         newParams[3] === serverAddress))
-                                        return [2 /*return*/, res(false)]; //rej("new params were not accepted");
+                                        return [2 /*return*/, res(false)]; // rej("new params were not accepted");
                                     // success
                                     res(true);
                                     return [2 /*return*/];
