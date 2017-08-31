@@ -226,7 +226,7 @@ export class Server extends EventEmitter {
 		});
 
 		socket.on("error", (err) => {
-			console.log(`socket error. mac=${plug.shortmac}. error: ${err}`);
+			console.log(`socket error. mac=${plug.shortmac.toString("hex")}. error: ${err}`);
 		});
 
 		// handles incoming messages
@@ -254,7 +254,16 @@ export class Server extends EventEmitter {
 					id = shortmac.toString("hex");
 					if (this.plugs.hasOwnProperty(id)) {
 						isReconnection = true;
+						// reconnection -- reuse plug object
 						plug = this.plugs[id];
+						// but destroy and forget the old socket
+						if (plug.socket != null) {
+							console.log("reconnection -- destroying socket");
+							plug.socket.removeAllListeners();
+							plug.socket.destroy();
+						}
+						// and remember the new one
+						plug.socket = socket;
 					} else {
 						plug = {
 							id: null,

@@ -185,7 +185,7 @@ var Server = (function (_super) {
             }
         });
         socket.on("error", function (err) {
-            console.log("socket error. mac=" + plug.shortmac + ". error: " + err);
+            console.log("socket error. mac=" + plug.shortmac.toString("hex") + ". error: " + err);
         });
         // handles incoming messages
         var expectedCommands = [];
@@ -210,7 +210,16 @@ var Server = (function (_super) {
                     id = shortmac.toString("hex");
                     if (_this.plugs.hasOwnProperty(id)) {
                         isReconnection = true;
+                        // reconnection -- reuse plug object
                         plug = _this.plugs[id];
+                        // but destroy and forget the old socket
+                        if (plug.socket != null) {
+                            console.log("reconnection -- destroying socket");
+                            plug.socket.removeAllListeners();
+                            plug.socket.destroy();
+                        }
+                        // and remember the new one
+                        plug.socket = socket;
                     }
                     else {
                         plug = {
