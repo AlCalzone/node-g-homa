@@ -104,6 +104,9 @@ The Plug object looks as follows:
 
 ## Changelog
 
+#### 0.0.4 (2017-08-31)
+* (AlCalzone) Fix reconnection after power loss of the plug
+
 #### 0.0.3 (2017-08-07)
 * (AlCalzone) Fix incompatibility with NodeJS 4.x
 
