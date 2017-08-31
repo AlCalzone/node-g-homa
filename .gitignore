@@ -286,3 +286,15 @@ __pycache__/
 *.btm.cs
 *.odx.cs
 *.xsd.cs
+
+# Visual Studio NodeJS Typings
+typings/
+
+# VSCode files
+.vscode/
+
+# Sourcemaps
+maps/
+
+# npm package files
+g-homa*.tgz
