@@ -18,8 +18,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t;
-    return { next: verb(0), "throw": verb(1), "return": verb(2) };
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -64,7 +64,7 @@ var pskBlockTimeout = 500;
  * Only works if the discovering device transmits via WiFi or if
  * the router is configured to forward UDP broadcasts over WiFi
  */
-var Discovery = (function (_super) {
+var Discovery = /** @class */ (function (_super) {
     __extends(Discovery, _super);
     function Discovery() {
         var _this = _super.call(this) || this;
@@ -240,7 +240,7 @@ var Discovery = (function (_super) {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        buf = Buffer.alloc(76 + code, 5);
+                        buf = new Buffer(76 + code).fill(5);
                         this.udp.setBroadcast(true);
                         this.udp.send(buf, 0, buf.length, 49999, this.broadcastAddress);
                         return [4 /*yield*/, lib_1.wait(timeout)];
@@ -260,4 +260,3 @@ var Discovery = (function (_super) {
     return Discovery;
 }(events_1.EventEmitter));
 exports.Discovery = Discovery;
-//# sourceMappingURL=discovery.js.map

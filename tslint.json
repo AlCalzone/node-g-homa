@@ -7,7 +7,7 @@
         "indent": [true, "tabs", 4],
         "object-literal-sort-keys": false,
         "object-literal-shorthand": false,
-        "array-type": ["array"],
+        "array-type": [true, "array"],
         "max-line-length": [false],
         "interface-name": [false],
         "variable-name": [
@@ -20,10 +20,8 @@
         "triple-equals": [true, "allow-undefined-check", "allow-null-check"],
         "arrow-parens": false,
         "no-bitwise": false,
-        "quotemark": [true, "double", "avoid-escape"], // change "double" to "single" if you prefer ' over "
-        // development:
+        "quotemark": [true, "double", "avoid-escape"],
+
         "no-console": [false]
-        // production:
-        // "no-console": [true, "log", "error"]
     }
 }

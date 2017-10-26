@@ -68,4 +68,3 @@ function promisifyNoError(fn, context) {
     };
 }
 exports.promisifyNoError = promisifyNoError;
-//# sourceMappingURL=lib.js.map

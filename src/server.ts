@@ -176,7 +176,7 @@ export class Server extends EventEmitter {
 		if (port != null) {
 			this.server.listen(port);
 		} else {
-			this.server.listen();
+			this.server.listen(0); // listen on a random free port
 		}
 
 		this.checkPlugTimer = setInterval(this.checkPlugsThread.bind(this), 10000);

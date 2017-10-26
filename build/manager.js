@@ -18,8 +18,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t;
-    return { next: verb(0), "throw": verb(1), "return": verb(2) };
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -66,7 +66,7 @@ var DiscoverResponse;
     }
     DiscoverResponse.parse = parse;
 })(DiscoverResponse || (DiscoverResponse = {}));
-var Manager = (function (_super) {
+var Manager = /** @class */ (function (_super) {
     __extends(Manager, _super);
     function Manager() {
         var _this = _super.call(this) || this;
@@ -79,7 +79,7 @@ var Manager = (function (_super) {
             console.log("error: " + e);
             throw e;
         });
-        _this.udp.bind(); // doesn't matter which address
+        _this.udp.bind(0); // listen on a random free port
         return _this;
     }
     Manager.prototype.close = function () {
@@ -257,4 +257,3 @@ var Manager = (function (_super) {
     return Manager;
 }(events_1.EventEmitter));
 exports.Manager = Manager;
-//# sourceMappingURL=manager.js.map

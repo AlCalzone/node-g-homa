@@ -132,7 +132,7 @@ var msgHeartbeatResponse = {
 };
 var msgSwitch_Part1 = Buffer.from([0x01, 0x01, 0x0a, 0xe0]);
 var msgSwitch_Part2 = Buffer.from([0xff, 0xfe, 0x00, 0x00, 0x10, 0x11, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00]);
-var Server = (function (_super) {
+var Server = /** @class */ (function (_super) {
     __extends(Server, _super);
     function Server(port) {
         var _this = _super.call(this) || this;
@@ -145,7 +145,7 @@ var Server = (function (_super) {
             _this.server.listen(port);
         }
         else {
-            _this.server.listen();
+            _this.server.listen(0); // listen on a random free port
         }
         _this.checkPlugTimer = setInterval(_this.checkPlugsThread.bind(_this), 10000);
         return _this;
@@ -350,4 +350,3 @@ var Server = (function (_super) {
     return Server;
 }(events_1.EventEmitter));
 exports.Server = Server;
-//# sourceMappingURL=server.js.map

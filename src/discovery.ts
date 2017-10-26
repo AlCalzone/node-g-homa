@@ -135,7 +135,7 @@ export class Discovery extends EventEmitter {
 	}
 
 	private async sendCodeWithTimeout(code: number, timeout: number): Promise<void> {
-		const buf = Buffer.alloc(76 + code, 5);
+		const buf = new Buffer(76 + code).fill(5);
 		this.udp.setBroadcast(true);
 		this.udp.send(buf, 0, buf.length, 49999, this.broadcastAddress);
 		await wait(timeout);

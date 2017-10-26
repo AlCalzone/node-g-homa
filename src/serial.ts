@@ -3,14 +3,12 @@ import * as readline from "readline";
 import { getBroadcastAddresses, promisifyNoError, range, wait } from "./lib";
 
 const udp = dgram
-	.createSocket({
-		type: "udp4",
-	})
+	.createSocket("udp4")
 	.once("listening", udp_onListening)
 	.on("message", udp_onMessage)
 	.on("error", (e) => { throw e; })
 	;
-udp.bind();
+udp.bind(0); // listen on a random free port
 
 function udp_onListening() {
 	main();

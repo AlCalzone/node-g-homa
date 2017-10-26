@@ -42,7 +42,7 @@ export class Manager extends EventEmitter {
 				throw e;
 			})
 			;
-		this.udp.bind(); // doesn't matter which address
+		this.udp.bind(0); // listen on a random free port
 	}
 
 	public close() {
