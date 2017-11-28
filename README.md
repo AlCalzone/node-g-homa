@@ -7,6 +7,12 @@ if the router is configured to forward UDP broadcasts over WiFi.
 * Replacement of the default external **C&C server** with a local one, so the plugs don't have to phone home.
 * **Command line serial interface** to manually talk to plugs on the local network.
 
+## Credits
+Protocol information was adapted from 
+* [FHEM](https://svn.fhem.de/trac/browser/trunk/fhem/FHEM/53_GHoma.pm)
+* [rodney42](https://github.com/rodney42/node-ghoma/blob/master/ghoma.js)
+
+Big thanks for the original work decoding the protocol!
 
 ## Usage
 
