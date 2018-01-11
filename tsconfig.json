@@ -13,5 +13,13 @@
         // "sourceRoot": "src/",
         "target": "es5",
         "lib": [ "es6" ]
-    }
+    },
+    "include": [
+        "src/**/*.ts"
+    ],
+    "exclude": [
+        "src/**/*.test.ts",
+        "build/**",
+        "node_modules/**"
+    ]
 }

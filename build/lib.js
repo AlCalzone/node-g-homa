@@ -68,3 +68,13 @@ function promisifyNoError(fn, context) {
     };
 }
 exports.promisifyNoError = promisifyNoError;
+function readUInt24(buf, offset) {
+    if (offset === void 0) { offset = 0; }
+    var ret = 0;
+    for (var i = 0; i < 3; i++) {
+        ret <<= 8;
+        ret += buf[i + offset];
+    }
+    return ret;
+}
+exports.readUInt24 = readUInt24;

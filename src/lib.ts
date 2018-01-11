@@ -67,12 +67,21 @@ export function range(start: number, end: number): number[] {
 
 export function promisifyNoError<T>(fn, context): (...args: any[]) => Promise<T>;
 export function promisifyNoError(fn, context) {
-    return function(...args) {
-        context = context || this;
-        return new Promise((resolve, reject) => {
-            fn.apply(context, [...args, (result) => {
-                return resolve(result);
-            }]);
-        });
-    };
+	return function(...args) {
+		context = context || this;
+		return new Promise((resolve, reject) => {
+			fn.apply(context, [...args, (result) => {
+				return resolve(result);
+			}]);
+		});
+	};
+}
+
+export function readUInt24(buf: Buffer, offset: number = 0): number {
+	let ret = 0;
+	for (let i = 0; i < 3; i++) {
+		ret <<= 8;
+		ret += buf[i + offset];
+	}
+	return ret;
 }

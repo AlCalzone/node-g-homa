@@ -296,5 +296,10 @@ typings/
 # Sourcemaps
 maps/
 
+# compiled test-files
+*.test.js
+/.nyc_output
+coverage/
+
 # npm package files
 g-homa*.tgz
