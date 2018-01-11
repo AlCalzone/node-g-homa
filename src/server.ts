@@ -7,7 +7,7 @@ import { range, readUInt24 } from "./lib";
 const PREFIX = Buffer.from([0x5A, 0xA5]);
 const POSTFIX = Buffer.from([0x5B, 0xB5]);
 
-enum Commands {
+export enum Commands {
 	init1 = 0x02,
 	init1_response = 0x03,
 	init2 = 0x05,
@@ -24,7 +24,7 @@ enum SwitchSourceInternal {
 }
 export type SwitchSource = "unknown" | "remote" | "local";
 
-interface Message {
+export interface Message {
 	command: Commands;
 	payload: Buffer;
 }
@@ -46,7 +46,7 @@ function computeChecksum(data: Buffer): number {
 	return 0xff - data.reduce((sum, cur) => (sum + cur) & 0xff, 0);
 }
 
-function parseMessage(buf: Buffer): { msg: Message, bytesRead: number } {
+export function parseMessage(buf: Buffer): { msg: Message, bytesRead: number } {
 	// the buffer has to be at least 2 (prefix) + 2 (length) + 1 (command) + 1 (checksum) + 2 (postfix) bytes long
 	if (buf.length < 8) return null;
 

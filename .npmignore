@@ -18,3 +18,6 @@ tsconfig.json
 *.njsproj*
 g-homa*.tgz
 build/**/*.map
+.nyc_output/
+coverage/
+maintenance/
