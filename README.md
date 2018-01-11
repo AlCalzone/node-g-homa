@@ -110,6 +110,10 @@ The Plug object looks as follows:
 
 ## Changelog
 
+#### 1.0.0 (2018-01-11)
+* (AlCalzone) Support energy measurement
+* (AlCalzone) Support reading the firmware version
+
 #### 0.0.4 (2017-08-31)
 * (AlCalzone) Fix reconnection after power loss of the plug
 

@@ -1,6 +1,28 @@
 /// <reference types="node" />
 import { EventEmitter } from "events";
-export declare type SwitchSource = "unknown" | "remote" | "local";
+export declare enum Commands {
+    init1 = 2,
+    init1_response = 3,
+    init2 = 5,
+    init2_response = 7,
+    heartbeat = 4,
+    heartbeat_response = 6,
+    switch = 16,
+    state_update = 144,
+}
+export declare enum SwitchSource {
+    unknown = 0,
+    local = 129,
+    remote = 17,
+}
+export interface Message {
+    command: Commands;
+    payload: Buffer;
+}
+export declare function parseMessage(buf: Buffer): {
+    msg: Message;
+    bytesRead: number;
+};
 export interface ServerAddress {
     port: number;
     family: string;
@@ -30,10 +52,11 @@ export interface Plug {
     port: number;
     lastSeen: number;
     online: boolean;
-    lastSwitchSource: SwitchSource;
+    lastSwitchSource: keyof typeof SwitchSource;
     state: boolean;
     shortmac: string;
     mac: string;
+    firmware: string;
     energyMeasurement: EnergyMeasurement;
 }
 export declare class Server extends EventEmitter {

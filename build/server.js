@@ -15,6 +15,9 @@ var crypto = require("crypto");
 var events_1 = require("events");
 var net = require("net");
 var lib_1 = require("./lib");
+// setup debug logging
+var debugPackage = require("debug");
+var debug = debugPackage("g-homa");
 var PREFIX = Buffer.from([0x5A, 0xA5]);
 var POSTFIX = Buffer.from([0x5B, 0xB5]);
 var Commands;
@@ -27,13 +30,13 @@ var Commands;
     Commands[Commands["heartbeat_response"] = 6] = "heartbeat_response";
     Commands[Commands["switch"] = 16] = "switch";
     Commands[Commands["state_update"] = 144] = "state_update";
-})(Commands || (Commands = {}));
-var SwitchSourceInternal;
-(function (SwitchSourceInternal) {
-    SwitchSourceInternal[SwitchSourceInternal["unknown"] = 0] = "unknown";
-    SwitchSourceInternal[SwitchSourceInternal["local"] = 129] = "local";
-    SwitchSourceInternal[SwitchSourceInternal["remote"] = 17] = "remote";
-})(SwitchSourceInternal || (SwitchSourceInternal = {}));
+})(Commands = exports.Commands || (exports.Commands = {}));
+var SwitchSource;
+(function (SwitchSource) {
+    SwitchSource[SwitchSource["unknown"] = 0] = "unknown";
+    SwitchSource[SwitchSource["local"] = 129] = "local";
+    SwitchSource[SwitchSource["remote"] = 17] = "remote";
+})(SwitchSource = exports.SwitchSource || (exports.SwitchSource = {}));
 function serializeMessage(msg) {
     var data = Buffer.concat([Buffer.from([msg.command]), msg.payload]);
     var lengthBytes = [(data.length >>> 8) & 0xff, data.length & 0xff];
@@ -54,31 +57,53 @@ function parseMessage(buf) {
     if (buf.length < 8)
         return null;
     if (!buf.slice(0, 2).equals(PREFIX)) {
-        console.log("invalid data in the receive buffer");
-        console.log(buf.toString("hex"));
+        debug("invalid data in the receive buffer");
+        debug(buf.toString("hex"));
         throw new Error("invalid data in the receive buffer");
     }
     // get length of the payload
     var payloadLength = buf.readUInt16BE(2);
     // check we have enough data
-    if (buf.length < 7 + payloadLength)
+    if (buf.length < 6 + payloadLength)
         return null;
     // extract the payload
     var data = buf.slice(4, 4 + payloadLength);
     var command = data[0];
     var payload = Buffer.from(data.slice(1));
+    // actually the buffer should be at least payloadLength + 7 bytes
+    // but the firmware has a bug resulting in the 2nd response to INIT2 being 1 byte short
+    if (command !== Commands.init2_response && buf.length < 7 + payloadLength)
+        return null;
+    // make sure the message ends with the postfix
+    var getFinalBytes = function () { return buf.slice(4 + payloadLength + 1, 4 + payloadLength + 3); };
+    var fail = function () {
+        debug("invalid data in the receive buffer");
+        debug(buf.toString("hex"));
+        throw new Error("invalid data in the receive buffer");
+    };
+    if (!getFinalBytes().equals(POSTFIX)) {
+        // if this is a (potentially bugged) init2_response, try again with a shorter buffer
+        if (command === Commands.init2_response) {
+            payloadLength--;
+            if (!getFinalBytes().equals(POSTFIX)) {
+                fail();
+            }
+            else {
+                // that worked, now we need to shorten the data by 1 byte
+                data = buf.slice(4, 4 + payloadLength);
+                payload = Buffer.from(data.slice(1));
+            }
+        }
+        else {
+            fail();
+        }
+    }
     // extract the checksum and check it
     var checksum = buf[4 + payloadLength];
     if (checksum !== computeChecksum(data)) {
-        console.log("invalid checksum");
-        console.log(buf.toString("hex"));
+        debug("invalid checksum");
+        debug(buf.toString("hex"));
         throw new Error("invalid checksum");
-    }
-    // make sure the message ends with the postfix
-    if (!buf.slice(4 + payloadLength + 1, 4 + payloadLength + 3).equals(POSTFIX)) {
-        console.log("invalid data in the receive buffer");
-        console.log(buf.toString("hex"));
-        throw new Error("invalid data in the receive buffer");
     }
     return {
         msg: {
@@ -88,6 +113,7 @@ function parseMessage(buf) {
         bytesRead: 4 + payloadLength + 3,
     };
 }
+exports.parseMessage = parseMessage;
 function formatMac(mac) {
     return lib_1.range(0, mac.length - 1)
         .map(function (i) { return mac[i].toString(16).toUpperCase(); })
@@ -109,7 +135,6 @@ var EnergyMeasurementTypes;
     EnergyMeasurementTypes[EnergyMeasurementTypes["maxPower"] = 7] = "maxPower";
     EnergyMeasurementTypes[EnergyMeasurementTypes["powerFactor"] = 8] = "powerFactor";
 })(EnergyMeasurementTypes = exports.EnergyMeasurementTypes || (exports.EnergyMeasurementTypes = {}));
-;
 // tslint:disable-next-line:no-namespace
 var Plug;
 (function (Plug) {
@@ -124,13 +149,8 @@ var Plug;
             shortmac: formatMac(internal.shortmac),
             mac: formatMac(internal.mac),
             state: internal.state,
-            lastSwitchSource: (function () {
-                switch (internal.lastSwitchSource) {
-                    case SwitchSourceInternal.unknown: return "unknown";
-                    case SwitchSourceInternal.remote: return "remote";
-                    case SwitchSourceInternal.local: return "local";
-                }
-            })(),
+            lastSwitchSource: internal.lastSwitchSource,
+            firmware: internal.firmware,
             energyMeasurement: internal.energyMeasurement,
         };
     }
@@ -175,7 +195,7 @@ var Server = /** @class */ (function (_super) {
     // gets called whenever a new client connects
     Server.prototype.server_onConnection = function (socket) {
         var _this = this;
-        console.log("connection from " + socket.remoteAddress);
+        debug("connection from " + socket.remoteAddress);
         var receiveBuffer = Buffer.from([]);
         var id;
         var plug;
@@ -204,7 +224,7 @@ var Server = /** @class */ (function (_super) {
             }
         });
         socket.on("error", function (err) {
-            console.log("socket error. mac=" + plug.shortmac.toString("hex") + ". error: " + err);
+            debug("socket error. mac=" + plug.shortmac.toString("hex") + ". error: " + err);
         });
         // handles incoming messages
         var expectedCommands = [];
@@ -221,6 +241,7 @@ var Server = /** @class */ (function (_super) {
                 socket.destroy();
                 return;
             }
+            // TODO: can we refactor this so it becomes testable?
             switch (msg.command) {
                 case Commands.init1_response:
                     // extract the triggercode and shortmac
@@ -233,7 +254,7 @@ var Server = /** @class */ (function (_super) {
                         plug = _this.plugs[id];
                         // but destroy and forget the old socket
                         if (plug.socket != null) {
-                            console.log("reconnection -- destroying socket");
+                            debug("reconnection -- destroying socket");
                             plug.socket.removeAllListeners();
                             plug.socket.destroy();
                         }
@@ -253,7 +274,8 @@ var Server = /** @class */ (function (_super) {
                             shortmac: null,
                             mac: null,
                             state: false,
-                            lastSwitchSource: SwitchSourceInternal.unknown,
+                            lastSwitchSource: "unknown",
+                            firmware: null,
                             energyMeasurement: {},
                         };
                     }
@@ -275,9 +297,11 @@ var Server = /** @class */ (function (_super) {
                     else {
                         // 2nd reply, handshake is over
                         expectedCommands = [];
-                        // TODO: We should be able to extract the firmware version here
-                        // # 5A A5 00 12|07 01 0A C0 32 23 62 8A 7E 00 02 05 00 01 01 08 11|4C 5B B5                       Anzahl Bytes stimmt nicht! ist aber immer so
-                        // #                                                       FF FF FF                                        FF: Firmware Version
+                        if (msg.payload.length === 16) {
+                            // the last three bytes contain the firmware version
+                            var _a = Array.from(msg.payload.slice(-3)), major = _a[0], minor = _a[1], build = _a[2];
+                            plug.firmware = major + "." + minor + "." + build;
+                        }
                         // remember plug and notify listeners
                         _this.plugs[id] = plug;
                         if (!isReconnection)
@@ -296,7 +320,7 @@ var Server = /** @class */ (function (_super) {
                     if (msg.payload.length === 0x14) {
                         // 1st case: on/off report
                         plug.state = msg.payload[msg.payload.length - 1] > 0;
-                        plug.lastSwitchSource = msg.payload[11];
+                        plug.lastSwitchSource = SwitchSource[msg.payload[11]];
                     }
                     else if (msg.payload.length === 0x15) {
                         // 2nd case: energy report
@@ -305,12 +329,12 @@ var Server = /** @class */ (function (_super) {
                         var typeName = EnergyMeasurementTypes[type];
                         plug.energyMeasurement[typeName] = value;
                     }
-                    console.log("got update: " + msg.payload.toString("hex"));
+                    debug("got update: " + msg.payload.toString("hex"));
                     _this.emit("plug updated", Plug.from(plug));
                     break;
                 default:
-                    console.log("received message with unknown command " + msg.command.toString(16));
-                    console.log(msg.payload.toString("hex"));
+                    debug("received message with unknown command " + msg.command.toString(16));
+                    debug(msg.payload.toString("hex"));
                     break;
             }
         };

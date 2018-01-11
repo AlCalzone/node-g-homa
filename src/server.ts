@@ -4,6 +4,10 @@ import { EventEmitter } from "events";
 import * as net from "net";
 import { range, readUInt24 } from "./lib";
 
+// setup debug logging
+import * as debugPackage from "debug";
+const debug = debugPackage("g-homa");
+
 const PREFIX = Buffer.from([0x5A, 0xA5]);
 const POSTFIX = Buffer.from([0x5B, 0xB5]);
 
@@ -17,12 +21,12 @@ export enum Commands {
 	switch = 0x10,
 	state_update = 0x90,
 }
-enum SwitchSourceInternal {
+export enum SwitchSource {
 	unknown = 0x00,
 	local = 0x81,
 	remote = 0x11,
 }
-export type SwitchSource = "unknown" | "remote" | "local";
+// export type SwitchSource = "unknown" | "remote" | "local";
 
 export interface Message {
 	command: Commands;
@@ -51,31 +55,50 @@ export function parseMessage(buf: Buffer): { msg: Message, bytesRead: number } {
 	if (buf.length < 8) return null;
 
 	if (!buf.slice(0, 2).equals(PREFIX)) {
-		console.log("invalid data in the receive buffer");
-		console.log(buf.toString("hex"));
+		debug("invalid data in the receive buffer");
+		debug(buf.toString("hex"));
 		throw new Error("invalid data in the receive buffer");
 	}
 
 	// get length of the payload
-	const payloadLength = buf.readUInt16BE(2);
+	let payloadLength = buf.readUInt16BE(2);
 	// check we have enough data
-	if (buf.length < 7 + payloadLength) return null;
+	if (buf.length < 6 + payloadLength) return null;
 	// extract the payload
-	const data = buf.slice(4, 4 + payloadLength);
+	let data = buf.slice(4, 4 + payloadLength);
 	const command = data[0];
-	const payload = Buffer.from(data.slice(1));
+	let payload = Buffer.from(data.slice(1));
+	// actually the buffer should be at least payloadLength + 7 bytes
+	// but the firmware has a bug resulting in the 2nd response to INIT2 being 1 byte short
+	if (command !== Commands.init2_response && buf.length < 7 + payloadLength) return null;
+	// make sure the message ends with the postfix
+	const getFinalBytes = () => buf.slice(4 + payloadLength + 1, 4 + payloadLength + 3);
+	const fail = () => {
+		debug("invalid data in the receive buffer");
+		debug(buf.toString("hex"));
+		throw new Error("invalid data in the receive buffer");
+	};
+	if (!getFinalBytes().equals(POSTFIX)) {
+		// if this is a (potentially bugged) init2_response, try again with a shorter buffer
+		if (command === Commands.init2_response) {
+			payloadLength--;
+			if (!getFinalBytes().equals(POSTFIX)) {
+				fail();
+			} else {
+				// that worked, now we need to shorten the data by 1 byte
+				data = buf.slice(4, 4 + payloadLength);
+				payload = Buffer.from(data.slice(1));
+			}
+		} else {
+			fail();
+		}
+	}
 	// extract the checksum and check it
 	const checksum = buf[4 + payloadLength];
 	if (checksum !== computeChecksum(data)) {
-		console.log("invalid checksum");
-		console.log(buf.toString("hex"));
+		debug("invalid checksum");
+		debug(buf.toString("hex"));
 		throw new Error("invalid checksum");
-	}
-	// make sure the message ends with the postfix
-	if (!buf.slice(4 + payloadLength + 1, 4 + payloadLength + 3).equals(POSTFIX)) {
-		console.log("invalid data in the receive buffer");
-		console.log(buf.toString("hex"));
-		throw new Error("invalid data in the receive buffer");
 	}
 
 	return {
@@ -113,7 +136,7 @@ export enum EnergyMeasurementTypes {
 	frequency = 5,
 	maxPower = 7,
 	powerFactor = 8,
-};
+}
 export type EnergyMeasurementNames = keyof typeof EnergyMeasurementTypes;
 export type EnergyMeasurement = {[type in EnergyMeasurementNames]?: number};
 export interface Plug {
@@ -123,10 +146,11 @@ export interface Plug {
 	port: number;
 	lastSeen: number;
 	online: boolean;
-	lastSwitchSource: SwitchSource;
+	lastSwitchSource: keyof typeof SwitchSource;
 	state: boolean;
 	shortmac: string;
 	mac: string;
+	firmware: string;
 	energyMeasurement: EnergyMeasurement;
 }
 interface PlugInternal {
@@ -138,8 +162,9 @@ interface PlugInternal {
 	online: boolean;
 	shortmac: Buffer;
 	mac: Buffer;
+	firmware: string;
 	state: boolean;
-	lastSwitchSource: SwitchSourceInternal;
+	lastSwitchSource: keyof typeof SwitchSource;
 	socket: net.Socket;
 	triggercode: Buffer;
 	energyMeasurement: EnergyMeasurement;
@@ -157,13 +182,8 @@ namespace Plug {
 			shortmac: formatMac(internal.shortmac),
 			mac: formatMac(internal.mac),
 			state: internal.state,
-			lastSwitchSource: (() => {
-				switch (internal.lastSwitchSource) {
-					case SwitchSourceInternal.unknown: return "unknown";
-					case SwitchSourceInternal.remote: return "remote";
-					case SwitchSourceInternal.local: return "local";
-				}
-			})() as SwitchSource,
+			lastSwitchSource: internal.lastSwitchSource,
+			firmware: internal.firmware,
 			energyMeasurement: internal.energyMeasurement,
 		};
 	}
@@ -215,7 +235,7 @@ export class Server extends EventEmitter {
 	// gets called whenever a new client connects
 	private server_onConnection(socket: net.Socket) {
 
-		console.log("connection from " + socket.remoteAddress);
+		debug("connection from " + socket.remoteAddress);
 
 		let receiveBuffer = Buffer.from([]);
 		let id: string;
@@ -248,7 +268,7 @@ export class Server extends EventEmitter {
 		});
 
 		socket.on("error", (err) => {
-			console.log(`socket error. mac=${plug.shortmac.toString("hex")}. error: ${err}`);
+			debug(`socket error. mac=${plug.shortmac.toString("hex")}. error: ${err}`);
 		});
 
 		// handles incoming messages
@@ -267,6 +287,7 @@ export class Server extends EventEmitter {
 				return;
 			}
 
+			// TODO: can we refactor this so it becomes testable?
 			switch (msg.command) {
 
 				case Commands.init1_response:
@@ -280,7 +301,7 @@ export class Server extends EventEmitter {
 						plug = this.plugs[id];
 						// but destroy and forget the old socket
 						if (plug.socket != null) {
-							console.log("reconnection -- destroying socket");
+							debug("reconnection -- destroying socket");
 							plug.socket.removeAllListeners();
 							plug.socket.destroy();
 						}
@@ -299,7 +320,8 @@ export class Server extends EventEmitter {
 							shortmac: null,
 							mac: null,
 							state: false,
-							lastSwitchSource: SwitchSourceInternal.unknown,
+							lastSwitchSource: "unknown",
+							firmware: null,
 							energyMeasurement: {},
 						};
 					}
@@ -324,9 +346,11 @@ export class Server extends EventEmitter {
 						// 2nd reply, handshake is over
 						expectedCommands = [];
 
-						// TODO: We should be able to extract the firmware version here
-						// # 5A A5 00 12|07 01 0A C0 32 23 62 8A 7E 00 02 05 00 01 01 08 11|4C 5B B5                       Anzahl Bytes stimmt nicht! ist aber immer so
-						// #                                                       FF FF FF                                        FF: Firmware Version
+						if (msg.payload.length === 16) {
+							// the last three bytes contain the firmware version
+							const [major, minor, build] = Array.from(msg.payload.slice(-3));
+							plug.firmware = `${major}.${minor}.${build}`;
+						}
 
 						// remember plug and notify listeners
 						this.plugs[id] = plug;
@@ -347,7 +371,7 @@ export class Server extends EventEmitter {
 					if (msg.payload.length === 0x14) {
 						// 1st case: on/off report
 						plug.state = msg.payload[msg.payload.length - 1] > 0;
-						plug.lastSwitchSource = msg.payload[11];
+						plug.lastSwitchSource = SwitchSource[msg.payload[11]] as keyof typeof SwitchSource;
 					} else if (msg.payload.length === 0x15) {
 						// 2nd case: energy report
 						const type = msg.payload[16];
@@ -356,13 +380,13 @@ export class Server extends EventEmitter {
 						plug.energyMeasurement[typeName] = value;
 					}
 
-					console.log("got update: " + msg.payload.toString("hex"));
+					debug("got update: " + msg.payload.toString("hex"));
 					this.emit("plug updated", Plug.from(plug));
 					break;
 
 				default:
-					console.log("received message with unknown command " + msg.command.toString(16));
-					console.log(msg.payload.toString("hex"));
+					debug("received message with unknown command " + msg.command.toString(16));
+					debug(msg.payload.toString("hex"));
 					break;
 
 			}
