@@ -6,9 +6,27 @@ export interface ServerAddress {
     family: string;
     address: string;
 }
+export declare enum PlugType {
+    normal = 12835,
+    withEnergyMeasurement = 13603,
+}
+export declare enum EnergyMeasurementTypes {
+    power = 1,
+    energy = 2,
+    voltage = 3,
+    current = 4,
+    frequency = 5,
+    maxPower = 7,
+    powerFactor = 8,
+}
+export declare type EnergyMeasurementNames = keyof typeof EnergyMeasurementTypes;
+export declare type EnergyMeasurement = {
+    [type in EnergyMeasurementNames]?: number;
+};
 export interface Plug {
     id: string;
     ip: string;
+    type: keyof typeof PlugType;
     port: number;
     lastSeen: number;
     online: boolean;
@@ -16,6 +34,7 @@ export interface Plug {
     state: boolean;
     shortmac: string;
     mac: string;
+    energyMeasurement: EnergyMeasurement;
 }
 export declare class Server extends EventEmitter {
     constructor(port?: number);

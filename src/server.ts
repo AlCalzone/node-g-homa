@@ -2,7 +2,7 @@
 import * as crypto from "crypto";
 import { EventEmitter } from "events";
 import * as net from "net";
-import { range } from "./lib";
+import { range, readUInt24 } from "./lib";
 
 const PREFIX = Buffer.from([0x5A, 0xA5]);
 const POSTFIX = Buffer.from([0x5B, 0xB5]);
@@ -100,9 +100,26 @@ export interface ServerAddress {
 	family: string;
 	address: string;
 }
+export enum PlugType {
+	// Bytes 3-4 of a plug response determine what it supports
+	normal = 0x3223,
+	withEnergyMeasurement = 0x3523,
+}
+export enum EnergyMeasurementTypes {
+	power = 1,
+	energy = 2,
+	voltage = 3,
+	current = 4,
+	frequency = 5,
+	maxPower = 7,
+	powerFactor = 8,
+};
+export type EnergyMeasurementNames = keyof typeof EnergyMeasurementTypes;
+export type EnergyMeasurement = {[type in EnergyMeasurementNames]?: number};
 export interface Plug {
 	id: string;
 	ip: string;
+	type: keyof typeof PlugType;
 	port: number;
 	lastSeen: number;
 	online: boolean;
@@ -110,10 +127,12 @@ export interface Plug {
 	state: boolean;
 	shortmac: string;
 	mac: string;
+	energyMeasurement: EnergyMeasurement;
 }
 interface PlugInternal {
 	id: string;
 	ip: string;
+	type: keyof typeof PlugType;
 	port: number;
 	lastSeen: number;
 	online: boolean;
@@ -123,6 +142,7 @@ interface PlugInternal {
 	lastSwitchSource: SwitchSourceInternal;
 	socket: net.Socket;
 	triggercode: Buffer;
+	energyMeasurement: EnergyMeasurement;
 }
 // tslint:disable-next-line:no-namespace
 namespace Plug {
@@ -130,6 +150,7 @@ namespace Plug {
 		return {
 			id: internal.id,
 			ip: internal.ip,
+			type: internal.type,
 			port: internal.port,
 			lastSeen: internal.lastSeen,
 			online: internal.online,
@@ -143,6 +164,7 @@ namespace Plug {
 					case SwitchSourceInternal.local: return "local";
 				}
 			})() as SwitchSource,
+			energyMeasurement: internal.energyMeasurement,
 		};
 	}
 }
@@ -268,6 +290,7 @@ export class Server extends EventEmitter {
 						plug = {
 							id: null,
 							ip: socket.remoteAddress,
+							type: PlugType[(triggercode[0] << 8) + (triggercode[1])] as keyof typeof PlugType,
 							port: socket.remotePort,
 							lastSeen: Date.now(),
 							online: true,
@@ -277,6 +300,7 @@ export class Server extends EventEmitter {
 							mac: null,
 							state: false,
 							lastSwitchSource: SwitchSourceInternal.unknown,
+							energyMeasurement: {},
 						};
 					}
 					plug.id = id;
@@ -299,6 +323,11 @@ export class Server extends EventEmitter {
 					} else {
 						// 2nd reply, handshake is over
 						expectedCommands = [];
+
+						// TODO: We should be able to extract the firmware version here
+						// # 5A A5 00 12|07 01 0A C0 32 23 62 8A 7E 00 02 05 00 01 01 08 11|4C 5B B5                       Anzahl Bytes stimmt nicht! ist aber immer so
+						// #                                                       FF FF FF                                        FF: Firmware Version
+
 						// remember plug and notify listeners
 						this.plugs[id] = plug;
 						if (!isReconnection) this.emit("plug added", id);
@@ -314,9 +343,20 @@ export class Server extends EventEmitter {
 				case Commands.state_update:
 					this.onPlugResponse(plug);
 					// parse the state and the source of the state change
-					plug.state = msg.payload[msg.payload.length - 1] > 0;
+					// we have to differentiate two different payloads here
+					if (msg.payload.length === 0x14) {
+						// 1st case: on/off report
+						plug.state = msg.payload[msg.payload.length - 1] > 0;
+						plug.lastSwitchSource = msg.payload[11];
+					} else if (msg.payload.length === 0x15) {
+						// 2nd case: energy report
+						const type = msg.payload[16];
+						const value = readUInt24(msg.payload, msg.payload.length - 3) / 100;
+						const typeName = EnergyMeasurementTypes[type];
+						plug.energyMeasurement[typeName] = value;
+					}
+
 					console.log("got update: " + msg.payload.toString("hex"));
-					plug.lastSwitchSource = msg.payload[11];
 					this.emit("plug updated", Plug.from(plug));
 					break;
 

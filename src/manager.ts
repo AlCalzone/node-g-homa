@@ -152,7 +152,7 @@ export class Manager extends EventEmitter {
 			// confirm the new parameters
 			response = await this.request("AT+NETP\r", ip);
 			if (!response || !response.startsWith("+ok")) return res(false); // rej("setting new params failed");
-   const newParams = response.trim().split(",");
+			const newParams = response.trim().split(",");
 			if (!(
 				newParams.length === 4 &&
 				newParams[2] === serverPort &&
@@ -160,7 +160,7 @@ export class Manager extends EventEmitter {
 			)) return res(false); // rej("new params were not accepted");
 
 			// success
-   res(true);
+			res(true);
 		});
 	}
 

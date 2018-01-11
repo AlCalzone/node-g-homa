@@ -93,6 +93,23 @@ function formatMac(mac) {
         .map(function (i) { return mac[i].toString(16).toUpperCase(); })
         .join(":");
 }
+var PlugType;
+(function (PlugType) {
+    // Bytes 3-4 of a plug response determine what it supports
+    PlugType[PlugType["normal"] = 12835] = "normal";
+    PlugType[PlugType["withEnergyMeasurement"] = 13603] = "withEnergyMeasurement";
+})(PlugType = exports.PlugType || (exports.PlugType = {}));
+var EnergyMeasurementTypes;
+(function (EnergyMeasurementTypes) {
+    EnergyMeasurementTypes[EnergyMeasurementTypes["power"] = 1] = "power";
+    EnergyMeasurementTypes[EnergyMeasurementTypes["energy"] = 2] = "energy";
+    EnergyMeasurementTypes[EnergyMeasurementTypes["voltage"] = 3] = "voltage";
+    EnergyMeasurementTypes[EnergyMeasurementTypes["current"] = 4] = "current";
+    EnergyMeasurementTypes[EnergyMeasurementTypes["frequency"] = 5] = "frequency";
+    EnergyMeasurementTypes[EnergyMeasurementTypes["maxPower"] = 7] = "maxPower";
+    EnergyMeasurementTypes[EnergyMeasurementTypes["powerFactor"] = 8] = "powerFactor";
+})(EnergyMeasurementTypes = exports.EnergyMeasurementTypes || (exports.EnergyMeasurementTypes = {}));
+;
 // tslint:disable-next-line:no-namespace
 var Plug;
 (function (Plug) {
@@ -100,6 +117,7 @@ var Plug;
         return {
             id: internal.id,
             ip: internal.ip,
+            type: internal.type,
             port: internal.port,
             lastSeen: internal.lastSeen,
             online: internal.online,
@@ -113,6 +131,7 @@ var Plug;
                     case SwitchSourceInternal.local: return "local";
                 }
             })(),
+            energyMeasurement: internal.energyMeasurement,
         };
     }
     Plug.from = from;
@@ -225,6 +244,7 @@ var Server = /** @class */ (function (_super) {
                         plug = {
                             id: null,
                             ip: socket.remoteAddress,
+                            type: PlugType[(triggercode[0] << 8) + (triggercode[1])],
                             port: socket.remotePort,
                             lastSeen: Date.now(),
                             online: true,
@@ -234,6 +254,7 @@ var Server = /** @class */ (function (_super) {
                             mac: null,
                             state: false,
                             lastSwitchSource: SwitchSourceInternal.unknown,
+                            energyMeasurement: {},
                         };
                     }
                     plug.id = id;
@@ -254,6 +275,9 @@ var Server = /** @class */ (function (_super) {
                     else {
                         // 2nd reply, handshake is over
                         expectedCommands = [];
+                        // TODO: We should be able to extract the firmware version here
+                        // # 5A A5 00 12|07 01 0A C0 32 23 62 8A 7E 00 02 05 00 01 01 08 11|4C 5B B5                       Anzahl Bytes stimmt nicht! ist aber immer so
+                        // #                                                       FF FF FF                                        FF: Firmware Version
                         // remember plug and notify listeners
                         _this.plugs[id] = plug;
                         if (!isReconnection)
@@ -268,9 +292,20 @@ var Server = /** @class */ (function (_super) {
                 case Commands.state_update:
                     _this.onPlugResponse(plug);
                     // parse the state and the source of the state change
-                    plug.state = msg.payload[msg.payload.length - 1] > 0;
+                    // we have to differentiate two different payloads here
+                    if (msg.payload.length === 0x14) {
+                        // 1st case: on/off report
+                        plug.state = msg.payload[msg.payload.length - 1] > 0;
+                        plug.lastSwitchSource = msg.payload[11];
+                    }
+                    else if (msg.payload.length === 0x15) {
+                        // 2nd case: energy report
+                        var type = msg.payload[16];
+                        var value = lib_1.readUInt24(msg.payload, msg.payload.length - 3) / 100;
+                        var typeName = EnergyMeasurementTypes[type];
+                        plug.energyMeasurement[typeName] = value;
+                    }
                     console.log("got update: " + msg.payload.toString("hex"));
-                    plug.lastSwitchSource = msg.payload[11];
                     _this.emit("plug updated", Plug.from(plug));
                     break;
                 default:
