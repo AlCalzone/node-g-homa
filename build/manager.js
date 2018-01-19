@@ -104,37 +104,30 @@ var Manager = /** @class */ (function (_super) {
     Manager.prototype.findAllPlugs = function (duration) {
         if (duration === void 0) { duration = 1000; }
         return __awaiter(this, void 0, void 0, function () {
-            var _this = this;
+            var responses, handleDiscoverResponse;
             return __generator(this, function (_a) {
-                return [2 /*return*/, new Promise(function (res, rej) { return __awaiter(_this, void 0, void 0, function () {
-                        var responses, handleDiscoverResponse;
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    responses = [];
-                                    handleDiscoverResponse = function (msg, rinfo) {
-                                        if (msg.length && rinfo.port === 48899) {
-                                            console.log("received response: " + msg.toString("ascii"));
-                                            var response = DiscoverResponse.parse(msg.toString("ascii"));
-                                            if (response)
-                                                responses.push(response);
-                                        }
-                                    };
-                                    this.udp.on("message", handleDiscoverResponse);
-                                    this.udp.setBroadcast(true);
-                                    this.send("HF-A11ASSISTHREAD");
-                                    // Give the plugs time to respond
-                                    return [4 /*yield*/, lib_1.wait(duration)];
-                                case 1:
-                                    // Give the plugs time to respond
-                                    _a.sent();
-                                    this.udp.removeListener("message", handleDiscoverResponse);
-                                    // return the scan result
-                                    res(responses);
-                                    return [2 /*return*/];
+                switch (_a.label) {
+                    case 0:
+                        responses = [];
+                        handleDiscoverResponse = function (msg, rinfo) {
+                            if (msg.length && rinfo.port === 48899) {
+                                console.log("received response: " + msg.toString("ascii"));
+                                var response = DiscoverResponse.parse(msg.toString("ascii"));
+                                if (response)
+                                    responses.push(response);
                             }
-                        });
-                    }); })];
+                        };
+                        this.udp.on("message", handleDiscoverResponse);
+                        this.udp.setBroadcast(true);
+                        this.send("HF-A11ASSISTHREAD");
+                        // Give the plugs time to respond
+                        return [4 /*yield*/, lib_1.wait(duration)];
+                    case 1:
+                        // Give the plugs time to respond
+                        _a.sent();
+                        this.udp.removeListener("message", handleDiscoverResponse);
+                        return [2 /*return*/, responses];
+                }
             });
         });
     };
@@ -144,43 +137,36 @@ var Manager = /** @class */ (function (_super) {
     Manager.prototype.request = function (msg, ip, timeout) {
         if (timeout === void 0) { timeout = 1000; }
         return __awaiter(this, void 0, void 0, function () {
-            var _this = this;
+            var response, handleResponse, start;
             return __generator(this, function (_a) {
-                return [2 /*return*/, new Promise(function (res, rej) { return __awaiter(_this, void 0, void 0, function () {
-                        var response, handleResponse, start;
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    handleResponse = function (resp, rinfo) {
-                                        if (resp.length && rinfo.port === 48899) {
-                                            response = resp.toString("ascii");
-                                            console.log("received response: " + response);
-                                        }
-                                    };
-                                    // setup the handler and send the message
-                                    this.udp.once("message", handleResponse);
-                                    console.log("sending message: " + msg);
-                                    this.udp.setBroadcast(false);
-                                    this.send(msg, ip);
-                                    start = Date.now();
-                                    _a.label = 1;
-                                case 1:
-                                    if (!(Date.now() - start < timeout)) return [3 /*break*/, 3];
-                                    return [4 /*yield*/, lib_1.wait(10)];
-                                case 2:
-                                    _a.sent();
-                                    if (response != null)
-                                        return [3 /*break*/, 3];
-                                    return [3 /*break*/, 1];
-                                case 3:
-                                    // remove handler
-                                    this.udp.removeListener("message", handleResponse);
-                                    // and fulfill the promise
-                                    res(response);
-                                    return [2 /*return*/];
+                switch (_a.label) {
+                    case 0:
+                        handleResponse = function (resp, rinfo) {
+                            if (resp.length && rinfo.port === 48899) {
+                                response = resp.toString("ascii");
+                                console.log("received response: " + response);
                             }
-                        });
-                    }); })];
+                        };
+                        // setup the handler and send the message
+                        this.udp.once("message", handleResponse);
+                        console.log("sending message: " + msg);
+                        this.udp.setBroadcast(false);
+                        this.send(msg, ip);
+                        start = Date.now();
+                        _a.label = 1;
+                    case 1:
+                        if (!(Date.now() - start < timeout)) return [3 /*break*/, 3];
+                        return [4 /*yield*/, lib_1.wait(10)];
+                    case 2:
+                        _a.sent();
+                        if (response != null)
+                            return [3 /*break*/, 3];
+                        return [3 /*break*/, 1];
+                    case 3:
+                        // remove handler
+                        this.udp.removeListener("message", handleResponse);
+                        return [2 /*return*/, response];
+                }
             });
         });
     };
@@ -192,52 +178,46 @@ var Manager = /** @class */ (function (_super) {
      */
     Manager.prototype.configurePlug = function (ip, serverAddress, serverPort) {
         return __awaiter(this, void 0, void 0, function () {
-            var _this = this;
+            var response, newParams;
             return __generator(this, function (_a) {
-                // ensure the port is a string
-                serverPort = "" + serverPort;
-                return [2 /*return*/, new Promise(function (res, rej) { return __awaiter(_this, void 0, void 0, function () {
-                        var response, newParams;
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    // send the password
-                                    this.udp.setBroadcast(false);
-                                    return [4 /*yield*/, this.request("HF-A11ASSISTHREAD", ip)];
-                                case 1:
-                                    response = _a.sent();
-                                    if (!response)
-                                        return [2 /*return*/, res(false)]; // rej("no response");
-                                    // confirm receipt of the info
-                                    this.send("+ok", ip);
-                                    // wait a bit
-                                    return [4 /*yield*/, lib_1.wait(100)];
-                                case 2:
-                                    // wait a bit
-                                    _a.sent();
-                                    return [4 /*yield*/, this.request("AT+NETP=TCP,Client," + serverPort + "," + serverAddress + "\r", ip)];
-                                case 3:
-                                    // set the new parameters
-                                    response = _a.sent();
-                                    if (!response || !response.startsWith("+ok"))
-                                        return [2 /*return*/, res(false)]; // rej("setting new params failed");
-                                    return [4 /*yield*/, this.request("AT+NETP\r", ip)];
-                                case 4:
-                                    // confirm the new parameters
-                                    response = _a.sent();
-                                    if (!response || !response.startsWith("+ok"))
-                                        return [2 /*return*/, res(false)]; // rej("setting new params failed");
-                                    newParams = response.trim().split(",");
-                                    if (!(newParams.length === 4 &&
-                                        newParams[2] === serverPort &&
-                                        newParams[3] === serverAddress))
-                                        return [2 /*return*/, res(false)]; // rej("new params were not accepted");
-                                    // success
-                                    res(true);
-                                    return [2 /*return*/];
-                            }
-                        });
-                    }); })];
+                switch (_a.label) {
+                    case 0:
+                        // ensure the port is a string
+                        serverPort = "" + serverPort;
+                        // send the password
+                        this.udp.setBroadcast(false);
+                        return [4 /*yield*/, this.request("HF-A11ASSISTHREAD", ip)];
+                    case 1:
+                        response = _a.sent();
+                        if (!response)
+                            return [2 /*return*/, false]; // rej("no response");
+                        // confirm receipt of the info
+                        this.send("+ok", ip);
+                        // wait a bit
+                        return [4 /*yield*/, lib_1.wait(100)];
+                    case 2:
+                        // wait a bit
+                        _a.sent();
+                        return [4 /*yield*/, this.request("AT+NETP=TCP,Client," + serverPort + "," + serverAddress + "\r", ip)];
+                    case 3:
+                        // set the new parameters
+                        response = _a.sent();
+                        if (!response || !response.startsWith("+ok"))
+                            return [2 /*return*/, false]; // rej("setting new params failed");
+                        return [4 /*yield*/, this.request("AT+NETP\r", ip)];
+                    case 4:
+                        // confirm the new parameters
+                        response = _a.sent();
+                        if (!response || !response.startsWith("+ok"))
+                            return [2 /*return*/, false]; // rej("setting new params failed");
+                        newParams = response.trim().split(",");
+                        if (!(newParams.length === 4 &&
+                            newParams[2] === serverPort &&
+                            newParams[3] === serverAddress))
+                            return [2 /*return*/, false]; // rej("new params were not accepted");
+                        // success
+                        return [2 /*return*/, true];
+                }
             });
         });
     };
@@ -247,10 +227,7 @@ var Manager = /** @class */ (function (_super) {
     Manager.prototype.restorePlug = function (ip) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.configurePlug(ip, "plug.g-homa.com", 4196)];
-                    case 1: return [2 /*return*/, _a.sent()];
-                }
+                return [2 /*return*/, this.configurePlug(ip, "plug.g-homa.com", 4196)];
             });
         });
     };

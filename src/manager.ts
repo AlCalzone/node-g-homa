@@ -70,59 +70,55 @@ export class Manager extends EventEmitter {
 	 * @param duration - The time to wait for all responses
 	 */
 	public async findAllPlugs(duration: number = 1000): Promise<PlugInfo[]> {
-		return new Promise<PlugInfo[]>(async (res, rej) => {
-			const responses: DiscoverResponse[] = [];
-			const handleDiscoverResponse = (msg: Buffer, rinfo: dgram.RemoteInfo) => {
-				if (msg.length && rinfo.port === 48899) {
-					console.log("received response: " + msg.toString("ascii"));
-					const response = DiscoverResponse.parse(msg.toString("ascii"));
-					if (response) responses.push(response);
-				}
-			};
-			this.udp.on("message", handleDiscoverResponse);
-			this.udp.setBroadcast(true);
-			this.send("HF-A11ASSISTHREAD");
+		const responses: DiscoverResponse[] = [];
+		const handleDiscoverResponse = (msg: Buffer, rinfo: dgram.RemoteInfo) => {
+			if (msg.length && rinfo.port === 48899) {
+				console.log("received response: " + msg.toString("ascii"));
+				const response = DiscoverResponse.parse(msg.toString("ascii"));
+				if (response) responses.push(response);
+			}
+		};
+		this.udp.on("message", handleDiscoverResponse);
+		this.udp.setBroadcast(true);
+		this.send("HF-A11ASSISTHREAD");
 
-			// Give the plugs time to respond
-			await wait(duration);
+		// Give the plugs time to respond
+		await wait(duration);
 
-			this.udp.removeListener("message", handleDiscoverResponse);
-			// return the scan result
-			res(responses);
-		});
+		this.udp.removeListener("message", handleDiscoverResponse);
+
+		return responses;
 	}
 
 	/**
 	 * Sends a request to a socket and waits for a response
 	 */
 	private async request(msg: string, ip: string, timeout: number = 1000): Promise<string> {
-		return new Promise<string>(async (res, rej) => {
-			let response: string;
-			const handleResponse = (resp: Buffer, rinfo: dgram.RemoteInfo) => {
-				if (resp.length && rinfo.port === 48899) {
-					response = resp.toString("ascii");
-					console.log("received response: " + response);
-				}
-			};
-
-			// setup the handler and send the message
-			this.udp.once("message", handleResponse);
-			console.log("sending message: " + msg);
-			this.udp.setBroadcast(false);
-			this.send(msg, ip);
-
-			// wait for a receipt (we are only expecting single messages)
-			const start = Date.now();
-			while (Date.now() - start < timeout) {
-				await wait(10);
-				if (response != null) break;
+		let response: string;
+		const handleResponse = (resp: Buffer, rinfo: dgram.RemoteInfo) => {
+			if (resp.length && rinfo.port === 48899) {
+				response = resp.toString("ascii");
+				console.log("received response: " + response);
 			}
+		};
 
-			// remove handler
-			this.udp.removeListener("message", handleResponse);
-			// and fulfill the promise
-			res(response);
-		});
+		// setup the handler and send the message
+		this.udp.once("message", handleResponse);
+		console.log("sending message: " + msg);
+		this.udp.setBroadcast(false);
+		this.send(msg, ip);
+
+		// wait for a receipt (we are only expecting single messages)
+		const start = Date.now();
+		while (Date.now() - start < timeout) {
+			await wait(10);
+			if (response != null) break;
+		}
+
+		// remove handler
+		this.udp.removeListener("message", handleResponse);
+
+		return response;
 	}
 
 	/**
@@ -135,40 +131,38 @@ export class Manager extends EventEmitter {
 		// ensure the port is a string
 		serverPort = "" + serverPort;
 
-		return new Promise<boolean>(async (res, rej) => {
-			// send the password
-			this.udp.setBroadcast(false);
-			let response = await this.request("HF-A11ASSISTHREAD", ip);
-			if (!response) return res(false); // rej("no response");
-			// confirm receipt of the info
-			this.send("+ok", ip);
-			// wait a bit
-			await wait(100);
+		// send the password
+		this.udp.setBroadcast(false);
+		let response = await this.request("HF-A11ASSISTHREAD", ip);
+		if (!response) return false; // rej("no response");
+		// confirm receipt of the info
+		this.send("+ok", ip);
+		// wait a bit
+		await wait(100);
 
-			// set the new parameters
-			response = await this.request(`AT+NETP=TCP,Client,${serverPort},${serverAddress}\r`, ip);
-			if (!response || !response.startsWith("+ok")) return res(false); // rej("setting new params failed");
+		// set the new parameters
+		response = await this.request(`AT+NETP=TCP,Client,${serverPort},${serverAddress}\r`, ip);
+		if (!response || !response.startsWith("+ok")) return false; // rej("setting new params failed");
 
-			// confirm the new parameters
-			response = await this.request("AT+NETP\r", ip);
-			if (!response || !response.startsWith("+ok")) return res(false); // rej("setting new params failed");
-			const newParams = response.trim().split(",");
-			if (!(
-				newParams.length === 4 &&
-				newParams[2] === serverPort &&
-				newParams[3] === serverAddress
-			)) return res(false); // rej("new params were not accepted");
+		// confirm the new parameters
+		response = await this.request("AT+NETP\r", ip);
+		if (!response || !response.startsWith("+ok")) return false; // rej("setting new params failed");
+		const newParams = response.trim().split(",");
+		if (!(
+			newParams.length === 4 &&
+			newParams[2] === serverPort &&
+			newParams[3] === serverAddress
+		)) return false; // rej("new params were not accepted");
 
-			// success
-			res(true);
-		});
+		// success
+		return true;
 	}
 
 	/**
 	 * Restores the plug at the given IP to its original configuration
 	 */
 	public async restorePlug(ip: string): Promise<boolean> {
-		return await this.configurePlug(ip, "plug.g-homa.com", 4196);
+		return this.configurePlug(ip, "plug.g-homa.com", 4196);
 	}
 
 }
