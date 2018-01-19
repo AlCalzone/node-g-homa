@@ -17,59 +17,59 @@ Big thanks for the original work decoding the protocol!
 ## Usage
 
 ### Inclusion of new plugs (only works on wireless devices):
-```
+```ts
 const gHoma = require("g-homa");
 
 const discovery = new gHoma.Discovery();
 discovery
-	.on("inclusion finished", (devices) => {
-		// do something with included devices
-	})
-	.once("ready", () => {
-		// start inclusion
-		discovery.beginInclusion("psk");
-	})
+    .on("inclusion finished", (devices) => {
+        // do something with included devices
+    })
+    .once("ready", () => {
+        // start inclusion
+        discovery.beginInclusion("psk");
+    })
 ;
 ```
 You have to supply the WiFi key to the `beginInclusion` method. By default, inclusion stops after one device was found.
 The overload `beginInclusion("psk", false)` keeps finding new plugs for 60s and then returns.
 
 The devices object contains a table of IP and MAC addresses of the found plugs:
-```
+```js
 {
-	"ip#1": "AABBCCDDEEFF",
-	"ip#2": "FFEEDDCCBBAA",
-	// and so on...
+    "ip#1": "AABBCCDDEEFF",
+    "ip#2": "FFEEDDCCBBAA",
+    // and so on...
 }
 ```
 
 ### Discovery and configuration of included plugs
-```
+```ts
 const manager = new gHoma.Manager();
 manager
-	.once("ready", () => {
-		// find plugs (promise version)
-		manager.findAllPlugs(/* optional duration in ms */)
-			.then(plugs => {
-				// do something with the plugs
-			})
-		;
+    .once("ready", () => {
+        // find plugs (promise version)
+        manager.findAllPlugs(/* optional duration in ms */)
+            .then(plugs => {
+                // do something with the plugs
+            })
+        ;
 
-		// find plugs (async version)
-		const plugs = manager.findAllPlugs(/* optional duration in ms */);
+        // find plugs (async version)
+        const plugs = manager.findAllPlugs(/* optional duration in ms */);
 
-		// configure a plug to use the local C&C server
-		// async version:
-		let success /* boolean */ = manager.configurePlug("plug IP", "server IP", serverPort);
+        // configure a plug to use the local C&C server
+        // async version:
+        let success /* boolean */ = manager.configurePlug("plug IP", "server IP", serverPort);
 
-		// restore a plug to use the default external C&C server
-		let success /* boolean */ = manager.restorePlug("plug IP");
-	})
+        // restore a plug to use the default external C&C server
+        let success /* boolean */ = manager.restorePlug("plug IP");
+    })
 ;
 ```
 
 ### Control of configured devices with the local C&C server
-```
+```ts
 const server = new gHoma.Server(/* optional port number */);
 // ...
 // close the server when you're done
@@ -85,28 +85,28 @@ The server emits a number of events:
 - `plug alive`: The connection to a plug was re-established. Parameters: `plugId <string>`.
 
 The Plug object looks as follows:
-```
+```js
 {
-	id: string,		// ID of this plug
-	ip: string,		// remote IP address
-	port: number,		// remote port number
-	lastSeen: number,	// last seen (UNIX time)
-	online: boolean,	// if the plug is alive or dead
-	lastSwitchSource: "unknown" | "remote" | "local",	// where the plug was last switched from
-	state: boolean,		// if the plug is on or off
-	shortmac: string,	// last 3 bytes of the MAC, e.g. DD:EE:FF
-	mac: string,		// e.g. AA:BB:CC:DD:EE:FF
+    id: string,        // ID of this plug
+    ip: string,        // remote IP address
+    port: number,      // remote port number
+    lastSeen: number,  // last seen (UNIX time)
+    online: boolean,   // if the plug is alive or dead
+    lastSwitchSource: "unknown" | "remote" | "local", // where the plug was last switched from
+    state: boolean,    // if the plug is on or off
+    shortmac: string,  // last 3 bytes of the MAC, e.g. DD:EE:FF
+    mac: string,       // e.g. AA:BB:CC:DD:EE:FF
 }
 ```
 
 ### Manual serial interface
 1. run it from the command line: `node build/serial.js`
 1. enter an ip address to talk to, or leave the line blank to broadcast to all plugs
-	1. enter password `HF-A11ASSISTHREAD` (default, can be changed)
-	1. if the plug responds, confirm the receipt with `+ok`
-	1. get a list of commands with `AT+H\r` (all commands need to include `\r` at the end)
-	1. ...?
-	1. profit
+    1. enter password `HF-A11ASSISTHREAD` (default, can be changed)
+    1. if the plug responds, confirm the receipt with `+ok`
+    1. get a list of commands with `AT+H\r` (all commands need to include `\r` at the end)
+    1. ...?
+    1. profit
 
 ## Changelog
 
