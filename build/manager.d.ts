@@ -1,11 +1,12 @@
 /// <reference types="node" />
 import { EventEmitter } from "events";
+import { GHomaOptions } from "./lib";
 export interface PlugInfo {
     ip: string;
     mac: string;
 }
 export declare class Manager extends EventEmitter {
-    constructor();
+    constructor(options?: GHomaOptions);
     close(): void;
     private udp;
     private broadcastAddress;

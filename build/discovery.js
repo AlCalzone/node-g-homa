@@ -66,10 +66,13 @@ var pskBlockTimeout = 500;
  */
 var Discovery = /** @class */ (function (_super) {
     __extends(Discovery, _super);
-    function Discovery() {
+    function Discovery(options) {
+        if (options === void 0) { options = {}; }
         var _this = _super.call(this) || this;
         _this._inclusionActive = false;
-        _this.broadcastAddress = lib_1.getBroadcastAddresses()[0];
+        if (options.networkInterfaceIndex == null)
+            options.networkInterfaceIndex = 0;
+        _this.broadcastAddress = lib_1.getBroadcastAddresses()[options.networkInterfaceIndex];
         _this.udp = dgram
             .createSocket("udp4")
             .once("listening", _this.udp_onListening.bind(_this))

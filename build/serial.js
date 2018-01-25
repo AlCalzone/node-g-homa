@@ -60,47 +60,66 @@ function send(msg, ip) {
 }
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var running, rl, ask, ip, command;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var running, rl, ask, ip, addresses, ownAddresses, index, i, answer, _a, command;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
                     running = true;
                     rl = readline
                         .createInterface(process.stdin, process.stdout)
                         .on("close", function () { running = false; udp.close(); process.exit(0); });
                     ask = lib_1.promisifyNoError(rl.question, rl);
-                    _a.label = 1;
+                    _b.label = 1;
                 case 1:
-                    if (!running) return [3 /*break*/, 9];
+                    if (!running) return [3 /*break*/, 12];
                     console.log("G-Homa command line serial interface ready...");
                     console.log("");
                     return [4 /*yield*/, ask("Which IP to talk to? [default: Broadcast IP] ")];
                 case 2:
-                    ip = _a.sent();
-                    if (!ip || !ip.length)
-                        ip = lib_1.getBroadcastAddresses()[0];
-                    console.log("talking to " + ip + ". enter \"QUIT\" to return to IP selection");
-                    _a.label = 3;
+                    ip = _b.sent();
+                    if (!(!ip || !ip.length)) return [3 /*break*/, 5];
+                    addresses = lib_1.getBroadcastAddresses();
+                    ownAddresses = lib_1.getOwnIpAddresses();
+                    index = 0;
+                    if (!(addresses.length > 1)) return [3 /*break*/, 4];
+                    console.log("Multiple network interfaces found. You have to select one:");
+                    for (i = 0; i < ownAddresses.length; i++) {
+                        console.log("  " + i + " => Your IP: " + ownAddresses[i]);
+                    }
+                    _a = parseInt;
+                    return [4 /*yield*/, ask("Which network interface to use? [default: 0]")];
                 case 3:
-                    if (!running) return [3 /*break*/, 8];
-                    return [4 /*yield*/, ask(ip + " > ")];
+                    answer = _a.apply(void 0, [_b.sent(), 10]);
+                    if (!Number.isNaN(answer) && answer >= 0 && answer < addresses.length) {
+                        index = answer;
+                    }
+                    _b.label = 4;
                 case 4:
-                    command = _a.sent();
+                    ip = lib_1.getBroadcastAddresses()[index];
+                    _b.label = 5;
+                case 5:
+                    console.log("talking to " + ip + ". enter \"QUIT\" to return to IP selection");
+                    _b.label = 6;
+                case 6:
+                    if (!running) return [3 /*break*/, 11];
+                    return [4 /*yield*/, ask(ip + " > ")];
+                case 7:
+                    command = _b.sent();
                     if (command === "QUIT")
-                        return [3 /*break*/, 8];
+                        return [3 /*break*/, 11];
                     command = command.replace("\\r", "\r");
                     lastResponse = Date.now();
                     send(command, ip);
-                    _a.label = 5;
-                case 5:
-                    if (!(Date.now() - lastResponse < 1000)) return [3 /*break*/, 7];
+                    _b.label = 8;
+                case 8:
+                    if (!(Date.now() - lastResponse < 1000)) return [3 /*break*/, 10];
                     return [4 /*yield*/, lib_1.wait(100)];
-                case 6:
-                    _a.sent();
-                    return [3 /*break*/, 5];
-                case 7: return [3 /*break*/, 3];
-                case 8: return [3 /*break*/, 1];
-                case 9: return [2 /*return*/];
+                case 9:
+                    _b.sent();
+                    return [3 /*break*/, 8];
+                case 10: return [3 /*break*/, 6];
+                case 11: return [3 /*break*/, 1];
+                case 12: return [2 /*return*/];
             }
         });
     });

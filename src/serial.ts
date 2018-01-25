@@ -1,6 +1,6 @@
 ﻿import * as dgram from "dgram";
 import * as readline from "readline";
-import { getBroadcastAddresses, promisifyNoError, range, wait } from "./lib";
+import { getBroadcastAddresses, getOwnIpAddresses, GHomaOptions, promisifyNoError, range, wait } from "./lib";
 
 const udp = dgram
 	.createSocket("udp4")
@@ -38,7 +38,23 @@ async function main() {
 		console.log("G-Homa command line serial interface ready...");
 		console.log("");
 		let ip = await ask("Which IP to talk to? [default: Broadcast IP] ");
-		if (!ip || !ip.length) ip = getBroadcastAddresses()[0];
+		if (!ip || !ip.length) {
+			const addresses = getBroadcastAddresses();
+			const ownAddresses = getOwnIpAddresses();
+			let index = 0;
+			// allow the user to select a network interface if there are multiple ones
+			if (addresses.length > 1) {
+				console.log("Multiple network interfaces found. You have to select one:");
+				for (let i = 0; i < ownAddresses.length; i++) {
+					console.log(`  ${i} => Your IP: ${ownAddresses[i]}`);
+				}
+				const answer = parseInt(await ask("Which network interface to use? [default: 0]"), 10);
+				if (!Number.isNaN(answer) && answer >= 0 && answer < addresses.length) {
+					index = answer;
+				}
+			}
+			ip = getBroadcastAddresses()[index];
+		}
 		console.log(`talking to ${ip}. enter "QUIT" to return to IP selection`);
 
 		while (running) {

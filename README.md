@@ -33,6 +33,12 @@ discovery
 ```
 You have to supply the WiFi key to the `beginInclusion` method. By default, inclusion stops after one device was found.
 The overload `beginInclusion("psk", false)` keeps finding new plugs for 60s and then returns.
+Discovery works by sending packets to the broadcast address of a network interface. If you have multiple ones, e.g. LAN and WiFi, you can select the one to use by providing options to the constructor:
+```ts
+const discovery = new gHoma.Discovery({
+    networkInterfaceIndex: 0,
+});
+```
 
 The devices object contains a table of IP and MAC addresses of the found plugs:
 ```js
@@ -66,6 +72,12 @@ manager
         let success /* boolean */ = manager.restorePlug("plug IP");
     })
 ;
+```
+Like with Discovery, you can select the network interface the Manager uses by providing options to the constructor:
+```ts
+const manager = new gHoma.Manager({
+    networkInterfaceIndex: 0,
+});
 ```
 
 ### Control of configured devices with the local C&C server
@@ -109,6 +121,9 @@ The Plug object looks as follows:
     1. profit
 
 ## Changelog
+
+#### next (2018-XX-YY)
+* (AlCalzone) Add the possibility to select a network interface to use for communication
 
 #### 1.0.0 (2018-01-11)
 * (AlCalzone) Support energy measurement
