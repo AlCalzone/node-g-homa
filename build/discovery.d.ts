@@ -1,12 +1,13 @@
 /// <reference types="node" />
 import { EventEmitter } from "events";
+import { GHomaOptions } from "./lib";
 /**
  * Provides functions for inclusion and discover of G-Homa WiFi plugs
  * Only works if the discovering device transmits via WiFi or if
  * the router is configured to forward UDP broadcasts over WiFi
  */
 export declare class Discovery extends EventEmitter {
-    constructor();
+    constructor(options?: GHomaOptions);
     close(): void;
     private udp;
     private broadcastAddress;

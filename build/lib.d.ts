@@ -1,4 +1,8 @@
 /// <reference types="node" />
+export interface GHomaOptions {
+    /** Which network interface to use */
+    networkInterfaceIndex?: number;
+}
 /**
  * Returns the broadcast addresses for all connected interfaces
  */

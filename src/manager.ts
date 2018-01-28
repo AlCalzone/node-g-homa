@@ -1,6 +1,6 @@
 import * as dgram from "dgram";
 import { EventEmitter } from "events";
-import { getBroadcastAddresses, range, wait } from "./lib";
+import { getBroadcastAddresses, GHomaOptions, range, wait } from "./lib";
 
 export interface PlugInfo {
 	ip: string;
@@ -28,10 +28,11 @@ namespace DiscoverResponse {
 
 export class Manager extends EventEmitter {
 
-	constructor() {
+	constructor(options: GHomaOptions = {}) {
 		super();
 
-		this.broadcastAddress = getBroadcastAddresses()[0];
+		if (options.networkInterfaceIndex == null) options.networkInterfaceIndex = 0;
+		this.broadcastAddress = getBroadcastAddresses()[options.networkInterfaceIndex];
 		console.log("broadcast address = " + this.broadcastAddress);
 
 		this.udp = dgram

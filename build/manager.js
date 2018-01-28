@@ -68,9 +68,12 @@ var DiscoverResponse;
 })(DiscoverResponse || (DiscoverResponse = {}));
 var Manager = /** @class */ (function (_super) {
     __extends(Manager, _super);
-    function Manager() {
+    function Manager(options) {
+        if (options === void 0) { options = {}; }
         var _this = _super.call(this) || this;
-        _this.broadcastAddress = lib_1.getBroadcastAddresses()[0];
+        if (options.networkInterfaceIndex == null)
+            options.networkInterfaceIndex = 0;
+        _this.broadcastAddress = lib_1.getBroadcastAddresses()[options.networkInterfaceIndex];
         console.log("broadcast address = " + _this.broadcastAddress);
         _this.udp = dgram
             .createSocket("udp4")

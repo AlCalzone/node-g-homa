@@ -1,6 +1,6 @@
 import * as dgram from "dgram";
 import { EventEmitter } from "events";
-import { getBroadcastAddresses, range, wait } from "./lib";
+import { getBroadcastAddresses, GHomaOptions, range, wait } from "./lib";
 
 const preambleCode = 0;
 const preambleTimeout = 10;
@@ -21,10 +21,11 @@ const pskBlockTimeout = 500;
  */
 export class Discovery extends EventEmitter {
 
-	constructor() {
+	constructor(options: GHomaOptions = {}) {
 		super();
 
-		this.broadcastAddress = getBroadcastAddresses()[0];
+		if (options.networkInterfaceIndex == null) options.networkInterfaceIndex = 0;
+		this.broadcastAddress = getBroadcastAddresses()[options.networkInterfaceIndex];
 
 		this.udp = dgram
 			.createSocket("udp4")
@@ -108,7 +109,7 @@ export class Discovery extends EventEmitter {
 		for (const i of range(1, pskNumSemiDigitsBefore)) {
 			await this.sendCodeWithTimeout(
 				pskCodeSemiDigitBefore,
-				(i < pskNumSemiDigitsBefore) ? pskSemiDigitTimeout : pskDigitTimeout
+				(i < pskNumSemiDigitsBefore) ? pskSemiDigitTimeout : pskDigitTimeout,
 			);
 		}
 
@@ -120,7 +121,7 @@ export class Discovery extends EventEmitter {
 		for (const i of range(1, pskNumSemiDigitsAfter)) {
 			await this.sendCodeWithTimeout(
 				pskCodeSemiDigitAfter,
-				(i < pskNumSemiDigitsAfter) ? pskSemiDigitTimeout : pskDigitTimeout
+				(i < pskNumSemiDigitsAfter) ? pskSemiDigitTimeout : pskDigitTimeout,
 			);
 		}
 
@@ -128,7 +129,7 @@ export class Discovery extends EventEmitter {
 		await wait(pskDigitTimeout);
 		for (const i of range(1, pskNumChecksumPackets)) {
 			await this.sendCodeWithTimeout(lenCode,
-				(i < pskNumChecksumPackets) ? pskSemiDigitTimeout : pskBlockTimeout
+				(i < pskNumChecksumPackets) ? pskSemiDigitTimeout : pskBlockTimeout,
 			);
 		}
 
