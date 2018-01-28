@@ -122,7 +122,7 @@ The Plug object looks as follows:
 
 ## Changelog
 
-#### 1.1.0 (2018-01-28)
+#### 1.1.1 (2018-01-28)
 * (AlCalzone) Add the possibility to select a network interface to use for communication
 
 #### 1.0.0 (2018-01-11)
