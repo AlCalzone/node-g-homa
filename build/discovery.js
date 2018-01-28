@@ -78,8 +78,12 @@ var Discovery = /** @class */ (function (_super) {
         if (options.networkInterfaceIndex == null)
             options.networkInterfaceIndex = 0;
         var broadcastAddresses = lib_1.getBroadcastAddresses();
+        if (options.networkInterfaceIndex < 0 || options.networkInterfaceIndex > broadcastAddresses.length - 1) {
+            debug("network interface index out of bounds");
+            throw new Error("network interface index out of bounds");
+        }
         _this.broadcastAddress = broadcastAddresses[options.networkInterfaceIndex];
-        debug("broadcast address: " + broadcastAddresses);
+        debug("broadcast addresses: " + broadcastAddresses);
         debug("=> using " + _this.broadcastAddress);
         _this.udp = dgram
             .createSocket("udp4")

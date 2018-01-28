@@ -45,9 +45,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var debugPackage = require("debug");
 var dgram = require("dgram");
 var events_1 = require("events");
 var lib_1 = require("./lib");
+var debug = debugPackage("g-homa:manager");
 // tslint:disable-next-line:no-namespace
 var DiscoverResponse;
 (function (DiscoverResponse) {
@@ -73,13 +75,19 @@ var Manager = /** @class */ (function (_super) {
         var _this = _super.call(this) || this;
         if (options.networkInterfaceIndex == null)
             options.networkInterfaceIndex = 0;
-        _this.broadcastAddress = lib_1.getBroadcastAddresses()[options.networkInterfaceIndex];
-        console.log("broadcast address = " + _this.broadcastAddress);
+        var broadcastAddresses = lib_1.getBroadcastAddresses();
+        if (options.networkInterfaceIndex < 0 || options.networkInterfaceIndex > broadcastAddresses.length - 1) {
+            debug("network interface index out of bounds");
+            throw new Error("network interface index out of bounds");
+        }
+        _this.broadcastAddress = broadcastAddresses[options.networkInterfaceIndex];
+        debug("broadcast addresses: " + broadcastAddresses);
+        debug("=> using " + _this.broadcastAddress);
         _this.udp = dgram
             .createSocket("udp4")
             .once("listening", _this.udp_onListening.bind(_this))
             .on("error", function (e) {
-            console.log("error: " + e);
+            debug("socket error: " + e);
             throw e;
         });
         _this.udp.bind(0); // listen on a random free port
@@ -88,15 +96,15 @@ var Manager = /** @class */ (function (_super) {
     Manager.prototype.close = function () {
         this.udp.close();
         this.emit("closed");
-        console.log("socket closed");
+        debug("socket closed");
     };
     Manager.prototype.udp_onListening = function () {
-        console.log("manager socket ready");
+        debug("now listening");
         this.emit("ready");
     };
     Manager.prototype.send = function (msg, ip) {
         if (ip === void 0) { ip = this.broadcastAddress; }
-        console.log("sending message \"" + msg + "\" to " + ip);
+        debug("sending message \"" + msg + "\" to " + ip);
         var buf = Buffer.from(msg, "ascii");
         this.udp.send(buf, 0, buf.length, 48899, ip);
     };
@@ -114,7 +122,7 @@ var Manager = /** @class */ (function (_super) {
                         responses = [];
                         handleDiscoverResponse = function (msg, rinfo) {
                             if (msg.length && rinfo.port === 48899) {
-                                console.log("received response: " + msg.toString("ascii"));
+                                debug("received response: " + msg.toString("ascii"));
                                 var response = DiscoverResponse.parse(msg.toString("ascii"));
                                 if (response)
                                     responses.push(response);
@@ -147,12 +155,12 @@ var Manager = /** @class */ (function (_super) {
                         handleResponse = function (resp, rinfo) {
                             if (resp.length && rinfo.port === 48899) {
                                 response = resp.toString("ascii");
-                                console.log("received response: " + response);
+                                debug("received response: " + response);
                             }
                         };
                         // setup the handler and send the message
                         this.udp.once("message", handleResponse);
-                        console.log("sending message: " + msg);
+                        debug("sending message: " + msg);
                         this.udp.setBroadcast(false);
                         this.send(msg, ip);
                         start = Date.now();

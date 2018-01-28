@@ -1,6 +1,9 @@
+import * as debugPackage from "debug";
 import * as dgram from "dgram";
 import { EventEmitter } from "events";
 import { getBroadcastAddresses, GHomaOptions, range, wait } from "./lib";
+
+const debug = debugPackage("g-homa:manager");
 
 export interface PlugInfo {
 	ip: string;
@@ -32,14 +35,21 @@ export class Manager extends EventEmitter {
 		super();
 
 		if (options.networkInterfaceIndex == null) options.networkInterfaceIndex = 0;
-		this.broadcastAddress = getBroadcastAddresses()[options.networkInterfaceIndex];
-		console.log("broadcast address = " + this.broadcastAddress);
+		const broadcastAddresses = getBroadcastAddresses();
+		if (options.networkInterfaceIndex < 0 || options.networkInterfaceIndex > broadcastAddresses.length - 1) {
+			debug(`network interface index out of bounds`);
+			throw new Error(`network interface index out of bounds`);
+		}
+		this.broadcastAddress = broadcastAddresses[options.networkInterfaceIndex];
+
+		debug(`broadcast addresses: ${broadcastAddresses}`);
+		debug(`=> using ${this.broadcastAddress}`);
 
 		this.udp = dgram
 			.createSocket("udp4")
 			.once("listening", this.udp_onListening.bind(this))
 			.on("error", (e) => {
-				console.log("error: " + e);
+				debug(`socket error: ${e}`);
 				throw e;
 			})
 			;
@@ -49,19 +59,19 @@ export class Manager extends EventEmitter {
 	public close() {
 		this.udp.close();
 		this.emit("closed");
-		console.log("socket closed");
+		debug("socket closed");
 	}
 
 	private udp: dgram.Socket;
 	private broadcastAddress: string;
 
 	private udp_onListening() {
-		console.log("manager socket ready");
+		debug(`now listening`);
 		this.emit("ready");
 	}
 
 	private send(msg: string, ip: string = this.broadcastAddress) {
-		console.log(`sending message "${msg}" to ${ip}`);
+		debug(`sending message "${msg}" to ${ip}`);
 		const buf = Buffer.from(msg, "ascii");
 		this.udp.send(buf, 0, buf.length, 48899, ip);
 	}
@@ -74,7 +84,7 @@ export class Manager extends EventEmitter {
 		const responses: DiscoverResponse[] = [];
 		const handleDiscoverResponse = (msg: Buffer, rinfo: dgram.RemoteInfo) => {
 			if (msg.length && rinfo.port === 48899) {
-				console.log("received response: " + msg.toString("ascii"));
+				debug("received response: " + msg.toString("ascii"));
 				const response = DiscoverResponse.parse(msg.toString("ascii"));
 				if (response) responses.push(response);
 			}
@@ -99,13 +109,13 @@ export class Manager extends EventEmitter {
 		const handleResponse = (resp: Buffer, rinfo: dgram.RemoteInfo) => {
 			if (resp.length && rinfo.port === 48899) {
 				response = resp.toString("ascii");
-				console.log("received response: " + response);
+				debug("received response: " + response);
 			}
 		};
 
 		// setup the handler and send the message
 		this.udp.once("message", handleResponse);
-		console.log("sending message: " + msg);
+		debug("sending message: " + msg);
 		this.udp.setBroadcast(false);
 		this.send(msg, ip);
 

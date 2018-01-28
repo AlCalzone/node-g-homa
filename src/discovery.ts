@@ -34,9 +34,13 @@ export class Discovery extends EventEmitter {
 
 		if (options.networkInterfaceIndex == null) options.networkInterfaceIndex = 0;
 		const broadcastAddresses = getBroadcastAddresses();
+		if (options.networkInterfaceIndex < 0 || options.networkInterfaceIndex > broadcastAddresses.length - 1) {
+			debug(`network interface index out of bounds`);
+			throw new Error(`network interface index out of bounds`);
+		}
 		this.broadcastAddress = broadcastAddresses[options.networkInterfaceIndex];
 
-		debug(`broadcast address: ${broadcastAddresses}`);
+		debug(`broadcast addresses: ${broadcastAddresses}`);
 		debug(`=> using ${this.broadcastAddress}`);
 
 		this.udp = dgram
