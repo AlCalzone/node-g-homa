@@ -1,6 +1,9 @@
+import * as debugPackage from "debug";
 import * as dgram from "dgram";
 import { EventEmitter } from "events";
 import { getBroadcastAddresses, GHomaOptions, range, wait } from "./lib";
+
+const debug = debugPackage("g-homa:discovery");
 
 const preambleCode = 0;
 const preambleTimeout = 10;
@@ -14,6 +17,8 @@ const pskDigitTimeout = 100;
 const pskNumChecksumPackets = 3;
 const pskBlockTimeout = 500;
 
+const DISCOVERY_PORT = 49999;
+
 /**
  * Provides functions for inclusion and discover of G-Homa WiFi plugs
  * Only works if the discovering device transmits via WiFi or if
@@ -24,15 +29,25 @@ export class Discovery extends EventEmitter {
 	constructor(options: GHomaOptions = {}) {
 		super();
 
+		debug("starting discovery with options:");
+		debug(JSON.stringify(options, null, 4));
+
 		if (options.networkInterfaceIndex == null) options.networkInterfaceIndex = 0;
-		this.broadcastAddress = getBroadcastAddresses()[options.networkInterfaceIndex];
+		const broadcastAddresses = getBroadcastAddresses();
+		this.broadcastAddress = broadcastAddresses[options.networkInterfaceIndex];
+
+		debug(`broadcast address: ${broadcastAddresses}`);
+		debug(`=> using ${this.broadcastAddress}`);
 
 		this.udp = dgram
 			.createSocket("udp4")
 			.once("listening", this.udp_onListening.bind(this))
-			.on("error", (e) => { throw e; })
+			.on("error", (e) => {
+				debug(`socket error: ${e}`);
+				throw e;
+			})
 			;
-		this.udp.bind(49999);
+		this.udp.bind(DISCOVERY_PORT);
 	}
 	public close() {
 		this.udp.close();
@@ -43,6 +58,7 @@ export class Discovery extends EventEmitter {
 	private broadcastAddress: string;
 
 	private udp_onListening() {
+		debug(`now listening on port ${DISCOVERY_PORT}`);
 		this.emit("ready");
 	}
 
@@ -62,11 +78,13 @@ export class Discovery extends EventEmitter {
 	private async _doInclusion(psk: string, stopOnDiscover: boolean = true): Promise<void> {
 
 		this.emit("inclusion started");
+		debug("inclusion started");
 
 		// try to find new plugs, this only works while including
 		const foundDevices: { [ip: string]: string } = {}; // remember ips and mac addresses of found plugs
 		const smartlinkHandler = (msg: Buffer, rinfo: dgram.RemoteInfo) => {
 			if (rinfo.port === 48899 && msg.length > 0) {
+				debug(`got response from device with address: ${rinfo.address}`);
 				// ignore duplicates
 				if (foundDevices.hasOwnProperty(rinfo.address)) return;
 				// extract mac address
@@ -74,6 +92,7 @@ export class Discovery extends EventEmitter {
 				if (data.startsWith("smart_config ")) {
 					const mac = data.substring(data.indexOf(" ") + 1);
 					foundDevices[rinfo.address] = mac;
+					debug(`remembering device: MAC=${mac}, IP=${rinfo.address}`);
 					if (stopOnDiscover) this.cancelInclusion();
 				}
 			}
@@ -100,6 +119,7 @@ export class Discovery extends EventEmitter {
 		clearInterval(smartlinkfindTimer);
 		this.udp.removeListener("message", smartlinkHandler);
 
+		debug(`inclusion finished. Found ${Object.keys(foundDevices).length} devices.`);
 		this.emit("inclusion finished", foundDevices);
 		return;
 
@@ -147,6 +167,7 @@ export class Discovery extends EventEmitter {
 	 * Cancels the inclusion process
 	 */
 	public cancelInclusion() {
+		debug(`stopping inclusion...`);
 		this._inclusionActive = false;
 	}
 

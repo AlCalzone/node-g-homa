@@ -21,6 +21,7 @@
   "homepage": "https://github.com/AlCalzone/node-g-homa#readme",
   "devDependencies": {
     "@types/chai": "^4.1.0",
+    "@types/debug": "0.0.30",
     "@types/mocha": "^2.2.46",
     "@types/node": "^4.2.20",
     "@types/sinon": "^4.1.2",

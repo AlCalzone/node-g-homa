@@ -45,9 +45,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var debugPackage = require("debug");
 var dgram = require("dgram");
 var events_1 = require("events");
 var lib_1 = require("./lib");
+var debug = debugPackage("g-homa:discovery");
 var preambleCode = 0;
 var preambleTimeout = 10;
 var preambleNumPackets = 200;
@@ -59,6 +61,7 @@ var pskSemiDigitTimeout = 50;
 var pskDigitTimeout = 100;
 var pskNumChecksumPackets = 3;
 var pskBlockTimeout = 500;
+var DISCOVERY_PORT = 49999;
 /**
  * Provides functions for inclusion and discover of G-Homa WiFi plugs
  * Only works if the discovering device transmits via WiFi or if
@@ -70,14 +73,22 @@ var Discovery = /** @class */ (function (_super) {
         if (options === void 0) { options = {}; }
         var _this = _super.call(this) || this;
         _this._inclusionActive = false;
+        debug("starting discovery with options:");
+        debug(JSON.stringify(options, null, 4));
         if (options.networkInterfaceIndex == null)
             options.networkInterfaceIndex = 0;
-        _this.broadcastAddress = lib_1.getBroadcastAddresses()[options.networkInterfaceIndex];
+        var broadcastAddresses = lib_1.getBroadcastAddresses();
+        _this.broadcastAddress = broadcastAddresses[options.networkInterfaceIndex];
+        debug("broadcast address: " + broadcastAddresses);
+        debug("=> using " + _this.broadcastAddress);
         _this.udp = dgram
             .createSocket("udp4")
             .once("listening", _this.udp_onListening.bind(_this))
-            .on("error", function (e) { throw e; });
-        _this.udp.bind(49999);
+            .on("error", function (e) {
+            debug("socket error: " + e);
+            throw e;
+        });
+        _this.udp.bind(DISCOVERY_PORT);
         return _this;
     }
     Discovery.prototype.close = function () {
@@ -85,6 +96,7 @@ var Discovery = /** @class */ (function (_super) {
         this.emit("closed");
     };
     Discovery.prototype.udp_onListening = function () {
+        debug("now listening on port " + DISCOVERY_PORT);
         this.emit("ready");
     };
     Object.defineProperty(Discovery.prototype, "inclusionActive", {
@@ -112,9 +124,11 @@ var Discovery = /** @class */ (function (_super) {
                 switch (_b.label) {
                     case 0:
                         this.emit("inclusion started");
+                        debug("inclusion started");
                         foundDevices = {};
                         smartlinkHandler = function (msg, rinfo) {
                             if (rinfo.port === 48899 && msg.length > 0) {
+                                debug("got response from device with address: " + rinfo.address);
                                 // ignore duplicates
                                 if (foundDevices.hasOwnProperty(rinfo.address))
                                     return;
@@ -123,6 +137,7 @@ var Discovery = /** @class */ (function (_super) {
                                 if (data.startsWith("smart_config ")) {
                                     var mac = data.substring(data.indexOf(" ") + 1);
                                     foundDevices[rinfo.address] = mac;
+                                    debug("remembering device: MAC=" + mac + ", IP=" + rinfo.address);
                                     if (stopOnDiscover)
                                         _this.cancelInclusion();
                                 }
@@ -166,6 +181,7 @@ var Discovery = /** @class */ (function (_super) {
                         // the timer is over or the inclusion process has been handled
                         clearInterval(smartlinkfindTimer);
                         this.udp.removeListener("message", smartlinkHandler);
+                        debug("inclusion finished. Found " + Object.keys(foundDevices).length + " devices.");
                         this.emit("inclusion finished", foundDevices);
                         return [2 /*return*/];
                 }
@@ -258,6 +274,7 @@ var Discovery = /** @class */ (function (_super) {
      * Cancels the inclusion process
      */
     Discovery.prototype.cancelInclusion = function () {
+        debug("stopping inclusion...");
         this._inclusionActive = false;
     };
     return Discovery;
