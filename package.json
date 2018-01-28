@@ -1,6 +1,6 @@
 {
   "name": "g-homa",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Library to control G-Homa WiFi plugs",
   "main": "build/index.js",
   "types": "build/index.d.ts",
