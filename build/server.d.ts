@@ -22,7 +22,7 @@ export interface Message {
 export declare function parseMessage(buf: Buffer): {
     msg: Message;
     bytesRead: number;
-};
+} | null;
 export interface ServerAddress {
     port: number;
     family: string;

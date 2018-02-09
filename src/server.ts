@@ -50,7 +50,7 @@ function computeChecksum(data: Buffer): number {
 	return 0xff - data.reduce((sum, cur) => (sum + cur) & 0xff, 0);
 }
 
-export function parseMessage(buf: Buffer): { msg: Message, bytesRead: number } {
+export function parseMessage(buf: Buffer): { msg: Message, bytesRead: number } | null {
 	// the buffer has to be at least 2 (prefix) + 2 (length) + 1 (command) + 1 (checksum) + 2 (postfix) bytes long
 	if (buf.length < 8) return null;
 
@@ -173,14 +173,14 @@ interface PlugInternal {
 namespace Plug {
 	export function from(internal: PlugInternal): Plug {
 		return {
-			id: internal.id,
+			id: internal.id!,
 			ip: internal.ip,
 			type: internal.type,
 			port: internal.port,
 			lastSeen: internal.lastSeen,
 			online: internal.online,
-			shortmac: formatMac(internal.shortmac),
-			mac: formatMac(internal.mac),
+			shortmac: formatMac(internal.shortmac!),
+			mac: formatMac(internal.mac!),
 			state: internal.state,
 			lastSwitchSource: internal.lastSwitchSource,
 			firmware: internal.firmware,
@@ -246,7 +246,7 @@ export class Server extends EventEmitter {
 			// remember the received data
 			receiveBuffer = Buffer.concat([receiveBuffer, data]);
 			// parse all messages
-			let msg: { msg: Message, bytesRead: number };
+			let msg: { msg: Message, bytesRead: number } | null;
 			// parse all complete messages in the buffer
 			// tslint:disable-next-line:no-conditional-assignment
 			while (msg = parseMessage(receiveBuffer)) {
@@ -309,19 +309,19 @@ export class Server extends EventEmitter {
 						plug.socket = socket;
 					} else {
 						plug = {
-							id: null,
+							id: null!,
 							ip: socket.remoteAddress,
 							type: PlugType[(triggercode[0] << 8) + (triggercode[1])] as keyof typeof PlugType,
 							port: socket.remotePort,
 							lastSeen: Date.now(),
 							online: true,
 							socket: socket,
-							triggercode: null,
-							shortmac: null,
-							mac: null,
+							triggercode: null!,
+							shortmac: null!,
+							mac: null!,
 							state: false,
 							lastSwitchSource: "unknown",
-							firmware: null,
+							firmware: null!,
 							energyMeasurement: {},
 						};
 					}
@@ -339,7 +339,7 @@ export class Server extends EventEmitter {
 				case Commands.init2_response:
 					this.onPlugResponse(plug);
 					// check if the payload contains the full mac at the end
-					if (msg.payload.slice(-3).equals(plug.shortmac)) {
+					if (msg.payload.slice(-3).equals(plug.shortmac!)) {
 						// first reply, extract the full mac
 						plug.mac = Buffer.from(msg.payload.slice(-6));
 					} else {
@@ -451,8 +451,8 @@ export class Server extends EventEmitter {
 			const plug = this.plugs[id];
 			const payload = Buffer.concat([
 				msgSwitch_Part1,
-				plug.triggercode,
-				plug.shortmac,
+				plug.triggercode!,
+				plug.shortmac!,
 				msgSwitch_Part2,
 				Buffer.from([state ? 0xff : 0x00]),
 			]);

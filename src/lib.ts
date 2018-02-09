@@ -72,7 +72,7 @@ export function range(start: number, end: number): number[] {
 
 export function promisifyNoError<T>(fn, context): (...args: any[]) => Promise<T>;
 export function promisifyNoError(fn, context) {
-	return function(...args) {
+	return function(this: any, ...args: any[]) {
 		context = context || this;
 		return new Promise((resolve, reject) => {
 			fn.apply(context, [...args, (result) => {

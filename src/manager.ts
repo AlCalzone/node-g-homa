@@ -15,7 +15,7 @@ interface DiscoverResponse extends PlugInfo {
 }
 // tslint:disable-next-line:no-namespace
 namespace DiscoverResponse {
-	export function parse(response: string): DiscoverResponse {
+	export function parse(response: string): DiscoverResponse | null {
 		try {
 			const parts = response.split(",");
 			return {
@@ -105,7 +105,7 @@ export class Manager extends EventEmitter {
 	 * Sends a request to a socket and waits for a response
 	 */
 	private async request(msg: string, ip: string, timeout: number = 1000): Promise<string> {
-		let response: string;
+		let response: string | undefined;
 		const handleResponse = (resp: Buffer, rinfo: dgram.RemoteInfo) => {
 			if (resp.length && rinfo.port === 48899) {
 				response = resp.toString("ascii");
@@ -129,7 +129,7 @@ export class Manager extends EventEmitter {
 		// remove handler
 		this.udp.removeListener("message", handleResponse);
 
-		return response;
+		return response!;
 	}
 
 	/**

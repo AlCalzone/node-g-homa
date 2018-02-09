@@ -12,7 +12,8 @@
         "inlineSourceMap": false,
         // "sourceRoot": "src/",
         "target": "es5",
-        "lib": [ "es6" ]
+        "lib": [ "es6" ],
+        "strict": true
     },
     "include": [
         "src/**/*.ts"

@@ -269,7 +269,7 @@ var Discovery = /** @class */ (function (_super) {
                         return [4 /*yield*/, lib_1.wait(timeout)];
                     case 1:
                         _a.sent();
-                        return [2 /*return*/, null];
+                        return [2 /*return*/];
                 }
             });
         });

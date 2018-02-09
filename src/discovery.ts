@@ -164,7 +164,6 @@ export class Discovery extends EventEmitter {
 		this.udp.setBroadcast(true);
 		this.udp.send(buf, 0, buf.length, 49999, this.broadcastAddress);
 		await wait(timeout);
-		return null;
 	}
 
 	/**
