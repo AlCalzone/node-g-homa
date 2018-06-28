@@ -10,8 +10,8 @@ export declare class Manager extends EventEmitter {
     close(): void;
     private udp;
     private broadcastAddress;
-    private udp_onListening();
-    private send(msg, ip?);
+    private udp_onListening;
+    private send;
     /**
      * Finds all active G-Homa plugs on the network
      * @param duration - The time to wait for all responses
@@ -20,7 +20,7 @@ export declare class Manager extends EventEmitter {
     /**
      * Sends a request to a socket and waits for a response
      */
-    private request(msg, ip, timeout?);
+    private request;
     /**
      * Configures the plug at the given IP to talk to a new server
      * @param ip

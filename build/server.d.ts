@@ -8,12 +8,12 @@ export declare enum Commands {
     heartbeat = 4,
     heartbeat_response = 6,
     switch = 16,
-    state_update = 144,
+    state_update = 144
 }
 export declare enum SwitchSource {
     unknown = 0,
     local = 129,
-    remote = 17,
+    remote = 17
 }
 export interface Message {
     command: Commands;
@@ -30,7 +30,7 @@ export interface ServerAddress {
 }
 export declare enum PlugType {
     normal = 12835,
-    withEnergyMeasurement = 13603,
+    withEnergyMeasurement = 13603
 }
 export declare enum EnergyMeasurementTypes {
     power = 1,
@@ -39,7 +39,7 @@ export declare enum EnergyMeasurementTypes {
     current = 4,
     frequency = 5,
     maxPower = 7,
-    powerFactor = 8,
+    powerFactor = 8
 }
 export declare type EnergyMeasurementNames = keyof typeof EnergyMeasurementTypes;
 export declare type EnergyMeasurement = {
@@ -65,17 +65,17 @@ export declare class Server extends EventEmitter {
     private server;
     private plugs;
     private checkPlugTimer;
-    private server_onConnection(socket);
-    private server_onListening();
-    private server_onClose();
+    private server_onConnection;
+    private server_onListening;
+    private server_onClose;
     /**
      * Gets called when a plug sends an expected response
      */
-    private onPlugResponse(plug);
+    private onPlugResponse;
     /**
      * Gets called regularly to clean up dead plugs from the database
      */
-    private checkPlugsThread();
+    private checkPlugsThread;
     /**
      * Switch the plug with the given ID to the given state
      */

@@ -324,6 +324,10 @@ export class Server extends EventEmitter {
 							firmware: null!,
 							energyMeasurement: {},
 						};
+						if (plug.type == null) {
+							debug(`unknown plug type detected. triggercode is 0x${triggercode.toString("hex")}`);
+							debug(`the full payload was: 0x${msg.payload.toString("hex")}`);
+						}
 					}
 					plug.id = id;
 					plug.triggercode = triggercode;

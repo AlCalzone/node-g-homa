@@ -122,6 +122,9 @@ The Plug object looks as follows:
 
 ## Changelog
 
+#### 1.1.3 (2018-06-28)
+* (AlCalzone) Log the payload and triggercode when an unknown plug type is detected.
+
 #### 1.1.2 (2018-01-28)
 * (AlCalzone) Added the possibility to select a network interface to use for communication
 * (AlCalzone) Added debug logs to `Discovery` and `Manager`

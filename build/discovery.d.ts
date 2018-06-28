@@ -11,7 +11,7 @@ export declare class Discovery extends EventEmitter {
     close(): void;
     private udp;
     private broadcastAddress;
-    private udp_onListening();
+    private udp_onListening;
     private _inclusionActive;
     readonly inclusionActive: boolean;
     /**
@@ -20,9 +20,9 @@ export declare class Discovery extends EventEmitter {
      * @param stopOnDiscover - Stop the inclusion when a device was found
      */
     beginInclusion(psk: string, stopOnDiscover?: boolean): void;
-    private _doInclusion(psk, stopOnDiscover?);
-    private sendPSK(psk);
-    private sendCodeWithTimeout(code, timeout);
+    private _doInclusion;
+    private sendPSK;
+    private sendCodeWithTimeout;
     /**
      * Cancels the inclusion process
      */
