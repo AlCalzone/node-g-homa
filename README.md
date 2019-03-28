@@ -1,5 +1,7 @@
 # node-g-homa
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/AlCalzone/node-g-homa.svg)](https://greenkeeper.io/)
+
 NodeJS module to control G-Homa WiFi plugs. Functions include:
 * **Inclusion of new Plugs** into an existing WiFi network without using the app. 
 Only works if the discovering device transmits via WiFi or 
