@@ -32,4 +32,9 @@ export declare class Manager extends EventEmitter {
      * Restores the plug at the given IP to its original configuration
      */
     restorePlug(ip: string): Promise<boolean>;
+    /**
+     * Tests if the device at the given IP is a G-Homa plug or not
+     * @param ip
+     */
+    testPlug(ip: string): Promise<boolean>;
 }

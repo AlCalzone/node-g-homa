@@ -115,7 +115,7 @@ var Manager = /** @class */ (function (_super) {
     Manager.prototype.findAllPlugs = function (duration) {
         if (duration === void 0) { duration = 1000; }
         return __awaiter(this, void 0, void 0, function () {
-            var responses, handleDiscoverResponse;
+            var responses, handleDiscoverResponse, actualPlugs, _i, responses_1, device;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -137,7 +137,21 @@ var Manager = /** @class */ (function (_super) {
                         // Give the plugs time to respond
                         _a.sent();
                         this.udp.removeListener("message", handleDiscoverResponse);
-                        return [2 /*return*/, responses];
+                        actualPlugs = [];
+                        _i = 0, responses_1 = responses;
+                        _a.label = 2;
+                    case 2:
+                        if (!(_i < responses_1.length)) return [3 /*break*/, 5];
+                        device = responses_1[_i];
+                        return [4 /*yield*/, this.testPlug(device.ip)];
+                    case 3:
+                        if (_a.sent())
+                            actualPlugs.push(device);
+                        _a.label = 4;
+                    case 4:
+                        _i++;
+                        return [3 /*break*/, 2];
+                    case 5: return [2 /*return*/, actualPlugs];
                 }
             });
         });
@@ -239,6 +253,48 @@ var Manager = /** @class */ (function (_super) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 return [2 /*return*/, this.configurePlug(ip, "plug.g-homa.com", 4196)];
+            });
+        });
+    };
+    /**
+     * Tests if the device at the given IP is a G-Homa plug or not
+     * @param ip
+     */
+    Manager.prototype.testPlug = function (ip) {
+        return __awaiter(this, void 0, void 0, function () {
+            var response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        // send the password
+                        this.udp.setBroadcast(false);
+                        return [4 /*yield*/, this.request("HF-A11ASSISTHREAD", ip)];
+                    case 1:
+                        response = _a.sent();
+                        if (!response)
+                            return [2 /*return*/, false]; // rej("no response");
+                        // confirm receipt of the info
+                        this.send("+ok", ip);
+                        // wait a bit
+                        return [4 /*yield*/, lib_1.wait(100)];
+                    case 2:
+                        // wait a bit
+                        _a.sent();
+                        return [4 /*yield*/, this.request("AT+LVER\r", ip)];
+                    case 3:
+                        // G-Homa devices respond to AT+LVER
+                        response = _a.sent();
+                        if (!response || !response.startsWith("+ok"))
+                            return [2 /*return*/, false];
+                        return [4 /*yield*/, this.request("AT+VER\r", ip)];
+                    case 4:
+                        // and their responde to AT+VER starts with GAO
+                        response = _a.sent();
+                        if (!response || !response.startsWith("+ok=GAO"))
+                            return [2 /*return*/, false];
+                        // success
+                        return [2 /*return*/, true];
+                }
             });
         });
     };
