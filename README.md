@@ -122,6 +122,9 @@ The Plug object looks as follows:
 
 ## Changelog
 
+#### 1.2.0 (2019-08-09)
+* (AlCalzone) Test all discovered devices instead of assuming they are G-Homa 
+
 #### 1.1.3 (2018-06-28)
 * (AlCalzone) Log the payload and triggercode when an unknown plug type is detected.
 
