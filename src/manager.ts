@@ -95,10 +95,15 @@ export class Manager extends EventEmitter {
 
 		// Give the plugs time to respond
 		await wait(duration);
-
 		this.udp.removeListener("message", handleDiscoverResponse);
 
-		return responses;
+		// Now test each one if it is a G-Homa plug
+		const actualPlugs: DiscoverResponse[] = [];
+		for (const device of responses) {
+			if (await this.testPlug(device.ip)) actualPlugs.push(device);
+		}
+
+		return actualPlugs;
 	}
 
 	/**
@@ -175,5 +180,33 @@ export class Manager extends EventEmitter {
 	public async restorePlug(ip: string): Promise<boolean> {
 		return this.configurePlug(ip, "plug.g-homa.com", 4196);
 	}
+
+	/**
+	 * Tests if the device at the given IP is a G-Homa plug or not
+	 * @param ip
+	 */
+	public async testPlug(ip: string): Promise<boolean> {
+
+		// send the password
+		this.udp.setBroadcast(false);
+		let response = await this.request("HF-A11ASSISTHREAD", ip);
+		if (!response) return false; // rej("no response");
+		// confirm receipt of the info
+		this.send("+ok", ip);
+		// wait a bit
+		await wait(100);
+
+		// G-Homa devices respond to AT+LVER
+		response = await this.request(`AT+LVER\r`, ip);
+		if (!response || !response.startsWith("+ok")) return false;
+
+		// and their responde to AT+VER starts with GAO
+		response = await this.request("AT+VER\r", ip);
+		if (!response || !response.startsWith("+ok=GAO")) return false;
+		
+		// success
+		return true;
+	}
+
 
 }
