@@ -246,10 +246,24 @@ export class Server extends EventEmitter {
 			// remember the received data
 			receiveBuffer = Buffer.concat([receiveBuffer, data]);
 			// parse all messages
-			let msg: { msg: Message, bytesRead: number } | null;
+			let msg: { msg: Message, bytesRead: number } | null = null;
 			// parse all complete messages in the buffer
 			// tslint:disable-next-line:no-conditional-assignment
-			while (msg = parseMessage(receiveBuffer)) {
+			while (true) {
+				try {
+					msg = parseMessage(receiveBuffer);
+				} catch (e) {
+					if (e.message.indexOf("invalid data") > -1) {
+						// This is not a supported G-Homa plug
+						socket.end();
+						return;
+					}
+					// Pass the error through so we know whats going on
+					throw e;
+				}
+				// Did we receive a message?
+				if (!msg) break;
+
 				// handle the message
 				handleMessage(msg.msg);
 				// and cut it from the buffer
