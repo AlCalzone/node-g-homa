@@ -1,8 +1,11 @@
 "use strict";
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -10,10 +13,11 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -45,6 +49,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Discovery = void 0;
 var debugPackage = require("debug");
 var dgram = require("dgram");
 var events_1 = require("events");
@@ -105,7 +110,7 @@ var Discovery = /** @class */ (function (_super) {
     };
     Object.defineProperty(Discovery.prototype, "inclusionActive", {
         get: function () { return this._inclusionActive; },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     /**
@@ -122,10 +127,10 @@ var Discovery = /** @class */ (function (_super) {
     Discovery.prototype._doInclusion = function (psk, stopOnDiscover) {
         if (stopOnDiscover === void 0) { stopOnDiscover = true; }
         return __awaiter(this, void 0, void 0, function () {
-            var foundDevices, smartlinkHandler, smartlinkfindTimer, endTime, _i, _a, i, iPSK;
+            var foundDevices, smartlinkHandler, smartlinkfindTimer, endTime, i, iPSK;
             var _this = this;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0:
                         this.emit("inclusion started");
                         debug("inclusion started");
@@ -153,30 +158,29 @@ var Discovery = /** @class */ (function (_super) {
                             _this.udp.send(msg, 0, msg.length, 48899, _this.broadcastAddress);
                         }, 1000);
                         endTime = Date.now() + 60000;
-                        _b.label = 1;
+                        _a.label = 1;
                     case 1:
                         if (!(this._inclusionActive && (Date.now() <= endTime))) return [3 /*break*/, 10];
-                        _i = 0, _a = lib_1.range(1, preambleNumPackets);
-                        _b.label = 2;
+                        i = 1;
+                        _a.label = 2;
                     case 2:
-                        if (!(_i < _a.length)) return [3 /*break*/, 5];
-                        i = _a[_i];
+                        if (!(i <= preambleNumPackets)) return [3 /*break*/, 5];
                         return [4 /*yield*/, this.sendCodeWithTimeout(preambleCode, preambleTimeout)];
                     case 3:
-                        _b.sent();
-                        _b.label = 4;
+                        _a.sent();
+                        _a.label = 4;
                     case 4:
-                        _i++;
+                        i++;
                         return [3 /*break*/, 2];
                     case 5:
                         iPSK = 1;
-                        _b.label = 6;
+                        _a.label = 6;
                     case 6:
                         if (!(iPSK <= 1)) return [3 /*break*/, 9];
                         return [4 /*yield*/, this.sendPSK(Buffer.from(psk, "ascii"))];
                     case 7:
-                        _b.sent();
-                        _b.label = 8;
+                        _a.sent();
+                        _a.label = 8;
                     case 8:
                         iPSK++;
                         return [3 /*break*/, 6];
@@ -194,63 +198,60 @@ var Discovery = /** @class */ (function (_super) {
     };
     Discovery.prototype.sendPSK = function (psk) {
         return __awaiter(this, void 0, void 0, function () {
-            var _i, _a, i, i, _b, _c, i, lenCode, _d, _e, i;
-            return __generator(this, function (_f) {
-                switch (_f.label) {
+            var i, i, i, lenCode, i;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0:
-                        _i = 0, _a = lib_1.range(1, pskNumSemiDigitsBefore);
-                        _f.label = 1;
+                        i = 1;
+                        _a.label = 1;
                     case 1:
-                        if (!(_i < _a.length)) return [3 /*break*/, 4];
-                        i = _a[_i];
+                        if (!(i <= pskNumSemiDigitsBefore)) return [3 /*break*/, 4];
                         return [4 /*yield*/, this.sendCodeWithTimeout(pskCodeSemiDigitBefore, (i < pskNumSemiDigitsBefore) ? pskSemiDigitTimeout : pskDigitTimeout)];
                     case 2:
-                        _f.sent();
-                        _f.label = 3;
+                        _a.sent();
+                        _a.label = 3;
                     case 3:
-                        _i++;
+                        i++;
                         return [3 /*break*/, 1];
                     case 4:
                         i = 0;
-                        _f.label = 5;
+                        _a.label = 5;
                     case 5:
                         if (!(i < psk.length)) return [3 /*break*/, 8];
                         return [4 /*yield*/, this.sendCodeWithTimeout(psk[i], pskDigitTimeout)];
                     case 6:
-                        _f.sent();
-                        _f.label = 7;
+                        _a.sent();
+                        _a.label = 7;
                     case 7:
                         i++;
                         return [3 /*break*/, 5];
                     case 8:
-                        _b = 0, _c = lib_1.range(1, pskNumSemiDigitsAfter);
-                        _f.label = 9;
+                        i = 1;
+                        _a.label = 9;
                     case 9:
-                        if (!(_b < _c.length)) return [3 /*break*/, 12];
-                        i = _c[_b];
+                        if (!(i <= pskNumSemiDigitsAfter)) return [3 /*break*/, 12];
                         return [4 /*yield*/, this.sendCodeWithTimeout(pskCodeSemiDigitAfter, (i < pskNumSemiDigitsAfter) ? pskSemiDigitTimeout : pskDigitTimeout)];
                     case 10:
-                        _f.sent();
-                        _f.label = 11;
+                        _a.sent();
+                        _a.label = 11;
                     case 11:
-                        _b++;
+                        i++;
                         return [3 /*break*/, 9];
                     case 12:
                         lenCode = psk.length + 256;
                         return [4 /*yield*/, lib_1.wait(pskDigitTimeout)];
                     case 13:
-                        _f.sent();
-                        _d = 0, _e = lib_1.range(1, pskNumChecksumPackets);
-                        _f.label = 14;
+                        _a.sent();
+                        i = 1;
+                        _a.label = 14;
                     case 14:
-                        if (!(_d < _e.length)) return [3 /*break*/, 17];
-                        i = _e[_d];
+                        if (!(i <= pskNumChecksumPackets)) return [3 /*break*/, 17];
                         return [4 /*yield*/, this.sendCodeWithTimeout(lenCode, (i < pskNumChecksumPackets) ? pskSemiDigitTimeout : pskBlockTimeout)];
                     case 15:
-                        _f.sent();
-                        _f.label = 16;
+                        _a.sent();
+                        _a.label = 16;
                     case 16:
-                        _d++;
+                        i++;
                         return [3 /*break*/, 14];
                     case 17: return [2 /*return*/];
                 }

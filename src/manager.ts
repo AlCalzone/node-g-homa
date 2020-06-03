@@ -1,7 +1,7 @@
 import * as debugPackage from "debug";
 import * as dgram from "dgram";
 import { EventEmitter } from "events";
-import { getBroadcastAddresses, GHomaOptions, range, wait } from "./lib";
+import { getBroadcastAddresses, GHomaOptions, wait } from "./lib";
 
 const debug = debugPackage("g-homa:manager");
 

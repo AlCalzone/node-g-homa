@@ -1,6 +1,6 @@
 ﻿import * as dgram from "dgram";
 import * as readline from "readline";
-import { getBroadcastAddresses, getOwnIpAddresses, GHomaOptions, promisifyNoError, range, wait } from "./lib";
+import { getBroadcastAddresses, getOwnIpAddresses, promisifyNoError, wait } from "./lib";
 
 const udp = dgram
 	.createSocket("udp4")

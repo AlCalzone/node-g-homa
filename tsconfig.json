@@ -11,6 +11,7 @@
         "sourceMap": false,
         "inlineSourceMap": false,
         // "sourceRoot": "src/",
+        "noUnusedLocals": true,
         "target": "es5",
         "lib": [ "es6" ],
         "strict": true

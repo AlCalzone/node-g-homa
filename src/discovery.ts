@@ -1,7 +1,7 @@
 import * as debugPackage from "debug";
 import * as dgram from "dgram";
 import { EventEmitter } from "events";
-import { getBroadcastAddresses, GHomaOptions, range, wait } from "./lib";
+import { getBroadcastAddresses, GHomaOptions, wait } from "./lib";
 
 const debug = debugPackage("g-homa:discovery");
 
@@ -111,7 +111,7 @@ export class Discovery extends EventEmitter {
 		const endTime = Date.now() + 60000; // default: only 60s inclusion
 		while (this._inclusionActive && (Date.now() <= endTime)) {
 			// send preamble
-			for (const i of range(1, preambleNumPackets)) {
+			for (let i = 1; i <= preambleNumPackets; i++) {
 				await this.sendCodeWithTimeout(preambleCode, preambleTimeout);
 			}
 			for (let iPSK = 1; iPSK <= 1; iPSK++) {
@@ -130,7 +130,7 @@ export class Discovery extends EventEmitter {
 	}
 
 	private async sendPSK(psk: Buffer) {
-		for (const i of range(1, pskNumSemiDigitsBefore)) {
+		for (let i = 1; i <= pskNumSemiDigitsBefore; i++) {
 			await this.sendCodeWithTimeout(
 				pskCodeSemiDigitBefore,
 				(i < pskNumSemiDigitsBefore) ? pskSemiDigitTimeout : pskDigitTimeout,
@@ -142,7 +142,7 @@ export class Discovery extends EventEmitter {
 			await this.sendCodeWithTimeout(psk[i], pskDigitTimeout);
 		}
 
-		for (const i of range(1, pskNumSemiDigitsAfter)) {
+		for (let i = 1; i <=pskNumSemiDigitsAfter; i++) {
 			await this.sendCodeWithTimeout(
 				pskCodeSemiDigitAfter,
 				(i < pskNumSemiDigitsAfter) ? pskSemiDigitTimeout : pskDigitTimeout,
@@ -151,7 +151,7 @@ export class Discovery extends EventEmitter {
 
 		const lenCode = psk.length + 256;
 		await wait(pskDigitTimeout);
-		for (const i of range(1, pskNumChecksumPackets)) {
+		for (let i = 1; i <= pskNumChecksumPackets; i++) {
 			await this.sendCodeWithTimeout(lenCode,
 				(i < pskNumChecksumPackets) ? pskSemiDigitTimeout : pskBlockTimeout,
 			);

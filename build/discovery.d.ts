@@ -13,7 +13,7 @@ export declare class Discovery extends EventEmitter {
     private broadcastAddress;
     private udp_onListening;
     private _inclusionActive;
-    readonly inclusionActive: boolean;
+    get inclusionActive(): boolean;
     /**
      * Starts inclusion of G-Homa plugs with the given Wifi psk.
      * @param psk - The wifi password
